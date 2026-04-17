@@ -446,7 +446,7 @@ import { ref, reactive, computed, onMounted, defineComponent, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import apartmentService from '@/services/apartmentService'
 import zoneService from '@/services/zoneService'
-import type { ApartmentResponse, ApartmentStatus } from '@/types/apartment'
+import type { ApartmentResponse } from '@/types/apartment'
 import type { Zone, BuildingResponse } from '@/types/zone'
 
 // Inline FormField component to avoid extra file

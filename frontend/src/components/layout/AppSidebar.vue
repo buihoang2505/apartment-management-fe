@@ -26,7 +26,7 @@
         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
         :class="isActive(item.to)
           ? 'bg-[#A8845A] text-white'
-          : 'text-[#7DA5BE] hover:bg-[#1a4060] hover:text-white'"
+          : 'text-[#7DA5BE] hover:bg-white/[0.06] hover:text-[#B8D0E0]'"
       >
         <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
         {{ item.label }}
@@ -41,7 +41,7 @@
         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
         :class="isActive(item.to)
           ? 'bg-[#A8845A] text-white'
-          : 'text-[#7DA5BE] hover:bg-[#1a4060] hover:text-white'"
+          : 'text-[#7DA5BE] hover:bg-white/[0.06] hover:text-[#B8D0E0]'"
       >
         <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
         {{ item.label }}
@@ -56,7 +56,7 @@
         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
         :class="isActive(item.to)
           ? 'bg-[#A8845A] text-white'
-          : 'text-[#7DA5BE] hover:bg-[#1a4060] hover:text-white'"
+          : 'text-[#7DA5BE] hover:bg-white/[0.06] hover:text-[#B8D0E0]'"
       >
         <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
         {{ item.label }}

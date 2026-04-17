@@ -53,11 +53,21 @@ const router = createRouter({
           name: 'ZoneList',
           component: () => import('@/views/zone/ZoneListView.vue'),
         },
+        {
+          path: 'zones/:id',
+          name: 'ZoneDetail',
+          component: () => import('@/views/zone/ZoneDetailView.vue'),
+        },
         // Portfolios
         {
           path: 'portfolios',
           name: 'PortfolioList',
           component: () => import('@/views/portfolio/PortfolioListView.vue'),
+        },
+        {
+          path: 'portfolios/:id',
+          name: 'PortfolioDetail',
+          component: () => import('@/views/portfolio/PortfolioDetailView.vue'),
         },
         // System — placeholder
         {

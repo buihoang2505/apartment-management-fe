@@ -3,8 +3,8 @@
     <!-- Top row: Greeting + Market card -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- Greeting -->
-      <div class="lg:col-span-2 bg-[#D6E8F5] rounded-2xl px-6 py-6 flex items-start justify-between">
-        <div>
+      <div class="lg:col-span-2 bg-[#D6E8F5] rounded-2xl px-6 py-6 flex items-start justify-between overflow-hidden relative">
+        <div class="relative z-10">
           <h2 class="text-[#0F2E4A] font-bold text-2xl leading-tight">
             Chào buổi sáng,<br />Quản trị viên
           </h2>
@@ -13,12 +13,24 @@
             <strong>{{ latestZone }}</strong>.
           </p>
         </div>
-        <div class="text-[#A9B8A8] opacity-30 hidden sm:block">
-          <svg width="90" height="75" viewBox="0 0 90 75" fill="none">
-            <rect x="5" y="12" width="35" height="28" rx="3" stroke="currentColor" stroke-width="2.5"/>
-            <rect x="50" y="12" width="35" height="28" rx="3" stroke="currentColor" stroke-width="2.5"/>
-            <rect x="5" y="47" width="35" height="20" rx="3" stroke="currentColor" stroke-width="2.5"/>
-            <rect x="50" y="47" width="35" height="20" rx="3" stroke="currentColor" stroke-width="2.5"/>
+        <!-- Decorative apartment icon -->
+        <div class="absolute right-6 top-1/2 -translate-y-1/2 opacity-20 hidden sm:block pointer-events-none">
+          <svg width="100" height="80" viewBox="0 0 100 80" fill="none">
+            <rect x="10" y="30" width="35" height="45" rx="2" fill="#0F2E4A"/>
+            <rect x="50" y="20" width="40" height="55" rx="2" fill="#0F2E4A"/>
+            <rect x="18" y="40" width="8" height="8" rx="1" fill="white" fill-opacity="0.6"/>
+            <rect x="32" y="40" width="8" height="8" rx="1" fill="white" fill-opacity="0.6"/>
+            <rect x="18" y="54" width="8" height="8" rx="1" fill="white" fill-opacity="0.6"/>
+            <rect x="32" y="54" width="8" height="8" rx="1" fill="white" fill-opacity="0.6"/>
+            <rect x="58" y="30" width="8" height="8" rx="1" fill="white" fill-opacity="0.6"/>
+            <rect x="72" y="30" width="8" height="8" rx="1" fill="white" fill-opacity="0.6"/>
+            <rect x="58" y="44" width="8" height="8" rx="1" fill="white" fill-opacity="0.6"/>
+            <rect x="72" y="44" width="8" height="8" rx="1" fill="white" fill-opacity="0.6"/>
+            <rect x="58" y="58" width="8" height="8" rx="1" fill="white" fill-opacity="0.6"/>
+            <rect x="72" y="58" width="8" height="8" rx="1" fill="white" fill-opacity="0.6"/>
+            <rect x="22" y="63" width="11" height="12" rx="1" fill="white" fill-opacity="0.8"/>
+            <path d="M5 30 L27 15 L45 30" fill="#0F2E4A"/>
+            <path d="M45 20 L70 5 L90 20" fill="#0F2E4A"/>
           </svg>
         </div>
       </div>
@@ -39,9 +51,7 @@
           <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
         </div>
         <div v-else>
-          <p class="text-white font-bold text-4xl">
-            {{ growthLabel }}
-          </p>
+          <p class="text-white font-bold text-4xl">{{ growthLabel }}</p>
           <p class="text-[#7DA5BE] text-sm mt-1">Tăng trưởng tồn kho tháng {{ currentMonth }}</p>
         </div>
       </div>
@@ -51,26 +61,30 @@
     <div class="bg-white rounded-2xl px-6 py-5 flex items-center justify-between">
       <div>
         <p class="text-[#7A9AAD] text-xs font-semibold tracking-widest uppercase mb-1">Tổng sản phẩm</p>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5">
           <div v-if="loading.stats" class="h-10 w-24 bg-[#F0F4F8] rounded animate-pulse" />
           <template v-else>
             <span class="text-[#0F2E4A] font-bold text-4xl">{{ stats?.total?.toLocaleString('vi') ?? '—' }}</span>
-            <span v-if="stats?.growth?.percentage != null" class="bg-[#2DB89A] text-white text-xs font-bold px-3 py-1 rounded-full">
-              TĂNG TRƯỞNG {{ Math.abs(stats.growth.percentage).toFixed(0) }}%
+            <span
+              v-if="growthPill != null"
+              class="text-xs font-semibold px-2 py-0.5 rounded-full"
+              :class="growthPill >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'"
+            >
+              {{ growthPill >= 0 ? '+' : '' }}{{ growthPill.toFixed(0) }}%
             </span>
           </template>
         </div>
       </div>
       <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <span v-for="(val, key) in (stats?.byStatus ?? {})" :key="key"
-            class="text-xs px-3 py-1.5 rounded-lg font-medium"
+            class="text-xs px-2.5 py-1 rounded-lg font-medium"
             :class="statusClass(key)">
             {{ statusLabel(key) }}: {{ val }}
           </span>
         </div>
         <button @click="$router.push('/apartments')"
-          class="w-9 h-9 rounded-full bg-[#0F2E4A] flex items-center justify-center flex-shrink-0">
+          class="w-9 h-9 rounded-full bg-[#0F2E4A] flex items-center justify-center flex-shrink-0 hover:bg-[#1a4060] transition-colors">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M6 1v10M1 6h10" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
@@ -113,48 +127,77 @@
           <div v-for="p in portfolios" :key="p.id">
             <!-- Portfolio row -->
             <div
-              class="flex items-center gap-3 px-6 py-4 cursor-pointer hover:bg-[#F8FAFB] transition-colors"
-              :class="expandedPortfolio === p.id ? 'bg-[#0F2E4A]' : ''"
+              class="flex items-center gap-3 px-6 py-4 cursor-pointer transition-colors select-none"
+              :class="expandedPortfolio === p.id
+                ? 'bg-[#0F2E4A]'
+                : 'hover:bg-[#F8FAFB]'"
               @click="togglePortfolio(p.id)"
             >
+              <!-- dots icon -->
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="flex-shrink-0">
                 <circle cx="3" cy="4" r="1.5" :fill="expandedPortfolio === p.id ? '#A9B8A8' : '#C5D5DF'"/>
                 <circle cx="3" cy="10" r="1.5" :fill="expandedPortfolio === p.id ? '#A9B8A8' : '#C5D5DF'"/>
                 <circle cx="9" cy="4" r="1.5" :fill="expandedPortfolio === p.id ? '#A9B8A8' : '#C5D5DF'"/>
                 <circle cx="9" cy="10" r="1.5" :fill="expandedPortfolio === p.id ? '#A9B8A8' : '#C5D5DF'"/>
               </svg>
-              <span class="flex-1 font-semibold" :class="expandedPortfolio === p.id ? 'text-white' : 'text-[#414A4D]'">
+              <span class="flex-1 font-semibold text-sm" :class="expandedPortfolio === p.id ? 'text-white' : 'text-[#414A4D]'">
                 {{ p.name }}
               </span>
               <span class="text-xs px-2 py-0.5 rounded-full"
                 :class="expandedPortfolio === p.id ? 'bg-[#1a4060] text-[#A9B8A8]' : 'bg-[#F0F4F8] text-[#7A9AAD]'">
-                {{ p.zones.length }} phân khu
+                {{ p.zones?.length ?? 0 }} phân khu
               </span>
-              <div v-if="expandedPortfolio === p.id" class="flex items-center gap-2">
-                <button @click.stop="editPortfolio(p)" class="text-[#A9B8A8] hover:text-white transition-colors">
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M10.5 2l2.5 2.5L5 12.5H2.5V10L10.5 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+              <!-- Action icons — always visible -->
+              <div class="flex items-center gap-2 flex-shrink-0" @click.stop>
+                <button
+                  @click="$router.push(`/portfolios/${p.id}`)"
+                  class="transition-colors"
+                  :class="expandedPortfolio === p.id ? 'text-[#A9B8A8] hover:text-white' : 'text-[#B0C4D0] hover:text-[#A8845A]'"
+                  title="Chỉnh sửa"
+                >
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                    <path d="M10.5 2l2.5 2.5L5 12.5H2.5V10L10.5 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                  </svg>
                 </button>
-                <button @click.stop="deletePortfolio(p.id)" class="text-[#A9B8A8] hover:text-red-400 transition-colors">
-                  <svg width="14" height="15" viewBox="0 0 14 15" fill="none"><path d="M1 4h12M4.5 4V2.5h5V4M5.5 7v5M8.5 7v5M2 4l.8 9h8.4L12 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <button
+                  @click="deletePortfolio(p.id)"
+                  class="transition-colors"
+                  :class="expandedPortfolio === p.id ? 'text-[#A9B8A8] hover:text-red-400' : 'text-[#B0C4D0] hover:text-red-400'"
+                  title="Xóa"
+                >
+                  <svg width="14" height="15" viewBox="0 0 14 15" fill="none">
+                    <path d="M1 4h12M4.5 4V2.5h5V4M5.5 7v5M8.5 7v5M2 4l.8 9h8.4L12 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
                 </button>
-                <svg width="10" height="7" viewBox="0 0 10 7" fill="none"><path d="M1 1l4 4 4-4" stroke="#A9B8A8" stroke-width="1.5" stroke-linecap="round"/></svg>
               </div>
-              <svg v-else width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#A9B8A8" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <!-- Chevron -->
+              <svg v-if="expandedPortfolio === p.id" width="10" height="7" viewBox="0 0 10 7" fill="none" class="flex-shrink-0">
+                <path d="M1 1l4 4 4-4" stroke="#A9B8A8" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <svg v-else width="7" height="12" viewBox="0 0 7 12" fill="none" class="flex-shrink-0">
+                <path d="M1 1l5 5-5 5" stroke="#A9B8A8" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
             </div>
 
             <!-- Zones list -->
             <div v-if="expandedPortfolio === p.id" class="bg-[#162840] px-6 py-4">
-              <div v-if="!p.zones.length" class="text-[#7DA5BE] text-sm italic">Chưa có phân khu</div>
-              <div v-else class="space-y-3">
+              <div v-if="!p.zones?.length" class="text-[#7DA5BE] text-sm italic">Chưa có phân khu</div>
+              <div v-else class="space-y-2">
                 <div v-for="zone in p.zones" :key="zone.id"
-                  class="flex items-center justify-between bg-[#1a3a5c] rounded-xl px-4 py-3">
+                  class="flex items-center justify-between bg-[#1a3a5c] hover:bg-[#1e4268] rounded-xl px-4 py-3 transition-colors group/zone">
                   <div>
                     <p class="text-white text-sm font-medium">{{ zone.name }}</p>
-                    <p class="text-[#7DA5BE] text-xs mt-0.5">{{ zone.code }}</p>
+                    <p class="text-[#7DA5BE] text-xs mt-0.5 font-mono">{{ zone.code }}</p>
                   </div>
-                  <div class="flex gap-2">
-                    <button @click="$router.push('/zones')" class="text-[#7DA5BE] hover:text-white text-xs px-2 py-1 rounded-lg bg-[#0F2E4A] transition-colors">
+                  <div class="flex items-center gap-2">
+                    <button
+                      @click="$router.push(`/zones/${zone.id}`)"
+                      class="flex items-center gap-1 text-[#7DA5BE] hover:text-white text-xs px-3 py-1.5 rounded-lg bg-[#0F2E4A] hover:bg-[#A8845A] transition-colors"
+                    >
                       Xem
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M2 5h6M5 2l3 3-3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -238,10 +281,21 @@ const expandedPortfolio = ref<string | null>(null)
 const newTransactions = ref(14)
 const latestZone = ref('Lumi Hà Nội')
 const currentMonth = computed(() => new Date().getMonth() + 1)
+
 const growthLabel = computed(() => {
-  const p = stats.value?.growth?.percentage
-  if (p == null) return '—'
+  const growth = stats.value?.growth
+  if (!growth) return '—'
+  // Tháng trước = 0 → không tính được tăng trưởng hợp lệ
+  if (!growth.lastMonth) return '—%'
+  const p = growth.percentage
+  if (p == null) return '—%'
   return (p >= 0 ? '+' : '') + p.toFixed(1) + '%'
+})
+
+const growthPill = computed(() => {
+  const growth = stats.value?.growth
+  if (!growth?.lastMonth) return null
+  return growth.percentage ?? null
 })
 
 function togglePortfolio(id: string) {
@@ -264,10 +318,6 @@ function statusClass(key: string) {
     KHOA: 'bg-red-50 text-red-600',
   }
   return map[key] ?? 'bg-[#F0F4F8] text-[#414A4D]'
-}
-
-function editPortfolio(_p: Portfolio) {
-  router.push('/portfolios')
 }
 
 function deletePortfolio(_id: string) {
