@@ -3,14 +3,18 @@ export interface LoginRequest {
   password: string
 }
 
-export interface LoginResponse {
+// Backend trả về TokenResponse (không có User object riêng)
+export interface TokenResponse {
   token: string
-  user: User
+  username: string
+  role: string
+  expiresIn: number
 }
 
+// Alias cho compatibility
+export type LoginResponse = TokenResponse
+
 export interface User {
-  id: number
   username: string
-  email: string
   role: string
 }

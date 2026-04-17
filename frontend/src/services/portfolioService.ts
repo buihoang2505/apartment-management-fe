@@ -1,11 +1,14 @@
 import http from './http'
 import type { Portfolio } from '@/types/portfolio'
-import type { PageResponse } from '@/types/common'
+import type { CommonResponse } from '@/types/common'
 
 const portfolioService = {
-  getList(_params?: Record<string, unknown>): Promise<{ data: PageResponse<Portfolio> }> {
-    // TODO: implement
-    return http.get('/portfolios', { params: _params })
+  getAll(): Promise<{ data: CommonResponse<Portfolio[]> }> {
+    return http.get('/portfolios')
+  },
+
+  getById(id: string): Promise<{ data: CommonResponse<Portfolio> }> {
+    return http.get(`/portfolios/${id}`)
   },
 }
 

@@ -1,14 +1,23 @@
-export interface Zone {
-  id: number
-  code: string
+export interface ZoneResponse {
+  id: string
   name: string
-  portfolioId: number
+  code: string
+  description: string
+  createdAt: string
 }
 
-export interface Building {
-  id: number
-  code: string
+export type Zone = ZoneResponse
+
+export interface BuildingResponse {
+  id: string
+  zoneId: string
+  zoneName: string
   name: string
-  zoneId: number
-  floors: number
+  code: string
+  type: 'CHUNG_CU' | 'SHOPHOUSE' | 'VILLAS' | 'OFFICETEL' | 'OTHER'
+  totalFloors: number
+  description: string
+  createdAt: string
 }
+
+export type Building = BuildingResponse

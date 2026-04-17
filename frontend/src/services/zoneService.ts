@@ -1,11 +1,14 @@
 import http from './http'
-import type { Zone } from '@/types/zone'
-import type { PageResponse } from '@/types/common'
+import type { Zone, BuildingResponse } from '@/types/zone'
+import type { CommonResponse } from '@/types/common'
 
 const zoneService = {
-  getList(_params?: Record<string, unknown>): Promise<{ data: PageResponse<Zone> }> {
-    // TODO: implement
-    return http.get('/zones', { params: _params })
+  getAll(): Promise<{ data: CommonResponse<Zone[]> }> {
+    return http.get('/zones')
+  },
+
+  getBuildingsByZone(zoneId: string): Promise<{ data: CommonResponse<BuildingResponse[]> }> {
+    return http.get(`/zones/${zoneId}/buildings`)
   },
 }
 

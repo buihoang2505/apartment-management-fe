@@ -15,6 +15,7 @@ http.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  console.log('[http] Authorization:', config.headers.Authorization ?? 'none')
   return config
 })
 

@@ -1,20 +1,39 @@
-export type ApartmentStatus = 'AVAILABLE' | 'RENTED' | 'MAINTENANCE'
+import type { ImageResponse } from './common'
 
-export type ApartmentType = 'STUDIO' | 'ONE_BEDROOM' | 'TWO_BEDROOM' | 'THREE_BEDROOM' | 'PENTHOUSE'
+export type ApartmentStatus = 'DANG_BAN' | 'DA_COC' | 'DA_BAN' | 'GIU_CHO' | 'KHOA'
 
-export type FurnitureStatus = 'FULL' | 'PARTIAL' | 'NONE'
+export type ApartmentType =
+  | 'STUDIO'
+  | 'ONE_BR'
+  | 'TWO_BR'
+  | 'TWO_BR_PLUS'
+  | 'THREE_BR'
+  | 'THREE_BR_PLUS'
+  | 'PENTHOUSE'
+  | 'DUPLEX'
+  | 'OTHER'
 
-export interface Apartment {
-  id: number
-  code: string
+export interface ApartmentResponse {
+  id: string
+  unitCode: string
+  displayCode: string
   area: number
-  price: number
+  sellingPrice: number
+  tax: number
   status: ApartmentStatus
-  type: ApartmentType
-  furniture: FurnitureStatus
-  images: string[]
-  zoneId: number
-  portfolioId: number
+  furnitureDescription: string
+  apartmentType: ApartmentType
+  floorNumber: number
+  direction: string
+  bedroomCount: number
+  buildingId: string
+  buildingName: string
+  buildingCode: string
+  zoneId: string
+  zoneName: string
+  images: ImageResponse[]
   createdAt: string
   updatedAt: string
 }
+
+export type Apartment = ApartmentResponse
