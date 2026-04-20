@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -69,7 +70,7 @@ const router = createRouter({
           name: 'PortfolioDetail',
           component: () => import('@/views/portfolio/PortfolioDetailView.vue'),
         },
-        // System — placeholder
+        // System
         {
           path: 'departments',
           name: 'Departments',
@@ -85,6 +86,12 @@ const router = createRouter({
           name: 'AuditLogs',
           component: () => import('@/views/system/AuditLogsView.vue'),
         },
+        {
+          path: 'admin/users',
+          name: 'AdminUsers',
+          component: () => import('@/views/system/AdminUsersView.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
       ],
     },
 
@@ -94,8 +101,18 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const token = localStorage.getItem('token')
+
   if (to.meta.requiresAuth && !token) {
     return { name: 'Login' }
+  }
+
+  if (to.meta.requiresAdmin) {
+    const authStore = useAuthStore()
+    // Restore user từ localStorage nếu store chưa có (cold reload)
+    if (!authStore.user) authStore.initAuth()
+    if (!authStore.isAdmin) {
+      return { path: '/' }
+    }
   }
 })
 

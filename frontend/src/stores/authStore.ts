@@ -5,30 +5,47 @@ import authService from '@/services/authService'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
-  const user = ref<User | null>(null)
+  const user  = ref<User | null>(null)
 
   const isAuthenticated = computed(() => !!token.value)
+  const isAdmin         = computed(() => user.value?.role === 'ADMIN')
 
   function initAuth() {
-    const stored = localStorage.getItem('token')
-    if (stored) {
-      token.value = stored
+    const storedToken = localStorage.getItem('token')
+    const storedUser  = localStorage.getItem('user')
+    if (storedToken) token.value = storedToken
+    if (storedUser) {
+      try { user.value = JSON.parse(storedUser) } catch { /* ignore */ }
     }
   }
 
   async function login(credentials: LoginRequest) {
     const res = await authService.login(credentials)
-    const tokenResponse = res.data.data
-    token.value = tokenResponse.token
-    user.value = { username: tokenResponse.username, role: tokenResponse.role }
-    localStorage.setItem('token', tokenResponse.token)
+    const data = res.data.data
+
+    token.value = data.token
+    user.value  = { username: data.username, role: data.role }
+
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('user', JSON.stringify(user.value))
+
+    // Nếu login không trả về role → gọi thêm /admin/users/me
+    if (!data.role) {
+      try {
+        const me = await authService.getMe()
+        const meData = me.data?.data ?? me.data
+        user.value = { username: meData.username ?? data.username, role: meData.role ?? 'USER' }
+        localStorage.setItem('user', JSON.stringify(user.value))
+      } catch { /* giữ nguyên */ }
+    }
   }
 
   function logout() {
     token.value = null
-    user.value = null
+    user.value  = null
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
   }
 
-  return { token, user, isAuthenticated, initAuth, login, logout }
+  return { token, user, isAuthenticated, isAdmin, initAuth, login, logout }
 })

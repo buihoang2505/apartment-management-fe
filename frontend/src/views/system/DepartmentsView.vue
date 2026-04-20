@@ -102,7 +102,7 @@
               d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
           <span class="text-xs text-[#414A4D]/60">
-            <span class="font-semibold text-[#414A4D]">{{ dept.employeeCount ?? 0 }}</span> nhân viên
+            <span class="font-semibold text-[#414A4D]">{{ employeeCountMap[dept.id] ?? 0 }}</span> nhân viên
           </span>
         </div>
       </div>
@@ -259,9 +259,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import departmentService from '@/services/departmentService'
+import employeeService from '@/services/employeeService'
 import type { DepartmentResponse } from '@/types/department'
 
 const departments = ref<DepartmentResponse[]>([])
+// departmentId → số nhân viên (tính client-side vì BE không trả về field này)
+const employeeCountMap = ref<Record<string, number>>({})
 const loading = ref(false)
 const error = ref('')
 
@@ -289,10 +292,23 @@ async function fetchDepartments() {
   loading.value = true
   error.value = ''
   try {
-    const res = await departmentService.getAll()
-    // BE có thể trả { data: [...] } hoặc { data: { content: [...] } }
-    const raw = res.data?.data ?? res.data
-    departments.value = Array.isArray(raw) ? raw : (raw?.content ?? [])
+    const [deptRes, empRes] = await Promise.all([
+      departmentService.getAll(),
+      employeeService.getList({ size: 500 }),
+    ])
+
+    // Parse departments
+    const rawDept = deptRes.data?.data ?? deptRes.data
+    departments.value = Array.isArray(rawDept) ? rawDept : (rawDept?.content ?? [])
+
+    // Build count map từ employees
+    const rawEmp = (empRes.data as any)?.data ?? empRes.data
+    const empList: any[] = Array.isArray(rawEmp) ? rawEmp : (rawEmp?.content ?? [])
+    const countMap: Record<string, number> = {}
+    empList.forEach(e => {
+      if (e.departmentId) countMap[e.departmentId] = (countMap[e.departmentId] ?? 0) + 1
+    })
+    employeeCountMap.value = countMap
   } catch {
     error.value = 'Không thể tải danh sách phòng ban'
   } finally {
