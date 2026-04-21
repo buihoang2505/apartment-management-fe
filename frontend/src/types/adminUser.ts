@@ -8,5 +8,6 @@ export interface AdminUserResponse {
   phone?: string
   role: UserRole
   active: boolean
+  avatarUrl?: string
   createdAt: string
 }

@@ -298,17 +298,27 @@
             <div v-if="form.images.length" class="grid grid-cols-3 gap-2 mb-3">
               <div
                 v-for="(img, idx) in form.images"
-                :key="idx"
+                :key="img.id ?? idx"
                 class="relative aspect-square rounded-xl overflow-hidden bg-[#F0F4F8] group cursor-pointer"
                 @click="openGallery"
               >
                 <img
-                  :src="img.url"
+                  :src="imageDisplayUrl(img.url)"
                   :alt="img.label || `Ảnh ${idx + 1}`"
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                   @error="(e) => (e.target as HTMLImageElement).parentElement!.style.display='none'"
                 />
+                <!-- Delete spinner -->
+                <div
+                  v-if="deletingImageId === img.id"
+                  class="absolute inset-0 bg-black/50 flex items-center justify-center"
+                >
+                  <svg class="animate-spin" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="6" stroke="white" stroke-width="2" stroke-dasharray="18 14"/>
+                  </svg>
+                </div>
                 <button
+                  v-else
                   type="button"
                   @click.stop="removeImage(idx)"
                   class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
@@ -330,22 +340,32 @@
               <p class="text-[#A9B8A8] text-xs text-center">Chưa có ảnh nào</p>
             </div>
 
-            <!-- Add image URL input -->
-            <div class="flex gap-2">
+            <!-- Upload zone -->
+            <div v-if="isNew" class="px-3 py-2.5 bg-[#F6F9FB] border border-dashed border-[#DDE8EF] rounded-xl text-center">
+              <p class="text-[#A9B8A8] text-xs">Tạo căn hộ trước để thêm ảnh</p>
+            </div>
+            <div v-else>
               <input
-                v-model="newImageUrl"
-                type="text"
-                placeholder="Dán URL ảnh..."
-                class="flex-1 px-3 py-2 bg-[#F6F9FB] border border-[#DDE8EF] rounded-xl text-xs text-[#414A4D] placeholder-[#C5D5DF] outline-none focus:border-[#414A4D] transition-colors"
-                @keydown.enter.prevent="addImageUrl"
+                ref="imageFileInput"
+                type="file"
+                accept="image/*"
+                multiple
+                class="hidden"
+                @change="handleFileUpload"
               />
               <button
                 type="button"
-                @click="addImageUrl"
-                :disabled="!newImageUrl.trim()"
-                class="px-3 py-2 bg-[#0F2E4A] text-white rounded-xl text-xs font-medium disabled:opacity-40 hover:bg-[#1a4060] transition-colors"
+                :disabled="uploadingImages"
+                @click="(imageFileInput as HTMLInputElement)?.click()"
+                class="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#DDE8EF] rounded-xl text-xs text-[#7A9AAD] hover:border-[#A8845A] hover:text-[#A8845A] transition-colors disabled:opacity-50"
               >
-                Thêm
+                <svg v-if="uploadingImages" class="animate-spin" width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.8" stroke-dasharray="14 10"/>
+                </svg>
+                <svg v-else width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <path d="M6.5 2v9M2 6.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                {{ uploadingImages ? 'Đang tải lên...' : 'Thêm ảnh' }}
               </button>
             </div>
 
@@ -498,7 +518,7 @@ const form = reactive({
   bedroomCount: null as number | null,
   statusNote: '',
   buildingId: '',
-  images: [] as { url: string; label: string; sortOrder: number }[],
+  images: [] as { id?: string; url: string; label: string; sortOrder: number }[],
 })
 const errors = reactive({
   unitCode: '', area: '', sellingPrice: '', buildingId: '', zoneId: '',
@@ -514,8 +534,19 @@ const loadingBuildings = ref(false)
 const submitting = ref(false)
 const submitError = ref('')
 const discardDialog = ref(false)
-const newImageUrl = ref('')
 const toast = reactive({ show: false, type: 'success', message: '' })
+
+// Image upload
+const imageFileInput = ref<HTMLInputElement | null>(null)
+const uploadingImages = ref(false)
+const deletingImageId = ref<string | null>(null)
+const BASE_URL = 'http://localhost:8080'
+
+function imageDisplayUrl(url: string) {
+  if (!url) return ''
+  if (url.startsWith('http') || url.startsWith('blob:')) return url
+  return BASE_URL + url
+}
 
 const statusOptions = [
   { value: 'DANG_BAN', label: 'Đang bán' },
@@ -592,6 +623,7 @@ function populateForm(apt: ApartmentResponse) {
   form.statusNote = ''
   form.buildingId = apt.buildingId ?? ''
   form.images = (apt.images ?? []).map((img, i) => ({
+    id: img.id,
     url: img.url,
     label: img.label ?? '',
     sortOrder: img.sortOrder ?? i,
@@ -601,14 +633,42 @@ function populateForm(apt: ApartmentResponse) {
 }
 
 // Image helpers
-function addImageUrl() {
-  const url = newImageUrl.value.trim()
-  if (!url) return
-  form.images.push({ url, label: '', sortOrder: form.images.length })
-  newImageUrl.value = ''
+async function removeImage(idx: number) {
+  const img = form.images[idx]
+  if (img.id && apartmentId.value) {
+    deletingImageId.value = img.id
+    try {
+      await apartmentService.deleteImage(apartmentId.value, img.id)
+      form.images.splice(idx, 1)
+    } catch {
+      showToast('error', 'Không thể xóa ảnh')
+    } finally {
+      deletingImageId.value = null
+    }
+  } else {
+    form.images.splice(idx, 1)
+  }
 }
-function removeImage(idx: number) {
-  form.images.splice(idx, 1)
+
+async function handleFileUpload(event: Event) {
+  if (isNew.value || !apartmentId.value) return
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files ?? [])
+  if (!files.length) return
+  uploadingImages.value = true
+  try {
+    const res = await apartmentService.uploadImages(apartmentId.value, files)
+    const newImgs = (res.data as any)?.data ?? []
+    newImgs.forEach((img: { id: string; url: string; label?: string; sortOrder?: number }) => {
+      form.images.push({ id: img.id, url: img.url, label: img.label ?? '', sortOrder: img.sortOrder ?? form.images.length })
+    })
+    showToast('success', `Đã tải lên ${newImgs.length} ảnh`)
+  } catch {
+    showToast('error', 'Tải ảnh lên thất bại')
+  } finally {
+    uploadingImages.value = false
+    input.value = ''
+  }
 }
 function openGallery() {
   if (!isNew.value && apartmentId.value) {
@@ -649,7 +709,6 @@ async function handleSubmit() {
     bedroomCount: form.bedroomCount ?? undefined,
     statusNote: form.statusNote || undefined,
     buildingId: form.buildingId,
-    images: form.images.length ? form.images : undefined,
   }
   try {
     if (isNew.value) {

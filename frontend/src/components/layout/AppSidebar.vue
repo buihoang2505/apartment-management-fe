@@ -38,10 +38,17 @@
 
     <!-- ── User info ── -->
     <div class="px-3 py-3 border-t border-white/[0.06]">
-      <div class="flex items-center gap-3 px-2 py-2.5 rounded-[10px] hover:bg-white/[0.05] transition-colors group">
+      <div class="flex items-center gap-3 px-2 py-2.5 rounded-[10px] hover:bg-white/[0.05] transition-colors group cursor-pointer" @click="router.push('/profile')">
         <!-- Avatar -->
-        <div class="w-8 h-8 rounded-full bg-[#A8845A] flex items-center justify-center flex-shrink-0 text-white text-xs font-semibold">
-          {{ avatarInitial }}
+        <div class="w-8 h-8 rounded-full bg-[#A8845A] flex items-center justify-center flex-shrink-0 text-white text-xs font-semibold relative overflow-hidden">
+          <span>{{ avatarInitial }}</span>
+          <img
+            v-if="avatarUrl"
+            :src="avatarUrl"
+            alt=""
+            class="absolute inset-0 w-full h-full object-cover"
+            @error="(e) => (e.target as HTMLImageElement).style.display = 'none'"
+          />
         </div>
         <!-- Name + role -->
         <div class="flex-1 min-w-0">
@@ -77,6 +84,11 @@ const username      = computed(() => authStore.user?.username ?? 'Admin')
 const role          = computed(() => authStore.user?.role ?? '')
 const avatarInitial = computed(() => (authStore.user?.username ?? 'A').charAt(0).toUpperCase())
 const isAdmin       = computed(() => authStore.isAdmin)
+const avatarUrl     = computed(() => {
+  const url = authStore.user?.avatarUrl
+  if (!url) return null
+  return url.startsWith('http') ? url : `http://localhost:8080${url}`
+})
 
 function handleLogout() {
   authStore.logout()

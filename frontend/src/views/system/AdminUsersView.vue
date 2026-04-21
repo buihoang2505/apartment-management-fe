@@ -485,7 +485,7 @@ async function fetchUsers() {
   error.value = ''
   try {
     const res = await adminUserService.getAll()
-    const raw = res.data?.data ?? (res.data as any)
+    const raw: any = res.data?.data ?? (res.data as any)
     users.value = Array.isArray(raw) ? raw : (raw?.content ?? [])
   } catch {
     error.value = 'Không thể tải danh sách người dùng'
@@ -609,7 +609,7 @@ async function submitReset() {
   resetting.value  = true
   resetError.value = ''
   try {
-    await adminUserService.resetPassword(resetTarget.value.id, resetForm.value.newPassword)
+    await adminUserService.resetPassword(resetTarget.value.id, { newPassword: resetForm.value.newPassword })
     showToast('success', 'Đã đặt lại mật khẩu thành công')
     resetTarget.value = null
   } catch (e: any) {

@@ -1,7 +1,7 @@
 export interface GrowthStats {
   thisMonth: number
   lastMonth: number
-  percentage: number
+  percentage: number | null
 }
 
 export interface DashboardStatsResponse {

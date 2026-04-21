@@ -51,7 +51,10 @@
           <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
         </div>
         <div v-else>
-          <p class="text-white font-bold text-4xl">{{ growthLabel }}</p>
+          <p
+            class="font-bold leading-none"
+            :class="[growthTextClass, growthValue == null ? 'text-lg mt-2' : 'text-4xl']"
+          >{{ growthLabel }}</p>
           <p class="text-[#7DA5BE] text-sm mt-1">Tăng trưởng tồn kho tháng {{ currentMonth }}</p>
         </div>
       </div>
@@ -282,14 +285,22 @@ const newTransactions = ref(14)
 const latestZone = ref('Lumi Hà Nội')
 const currentMonth = computed(() => new Date().getMonth() + 1)
 
-const growthLabel = computed(() => {
+const growthValue = computed<number | null>(() => {
   const growth = stats.value?.growth
-  if (!growth) return '—'
-  // Tháng trước = 0 → không tính được tăng trưởng hợp lệ
-  if (!growth.lastMonth) return '—%'
-  const p = growth.percentage
-  if (p == null) return '—%'
+  if (!growth || !growth.lastMonth || growth.percentage == null) return null
+  return growth.percentage
+})
+
+const growthLabel = computed(() => {
+  const p = growthValue.value
+  if (p == null) return 'Chưa có dữ liệu'
   return (p >= 0 ? '+' : '') + p.toFixed(1) + '%'
+})
+
+const growthTextClass = computed(() => {
+  const p = growthValue.value
+  if (p == null) return 'text-white/40'
+  return p >= 0 ? 'text-emerald-400' : 'text-red-400'
 })
 
 const growthPill = computed(() => {

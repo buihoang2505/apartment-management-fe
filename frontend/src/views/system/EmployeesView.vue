@@ -443,7 +443,7 @@ async function fetchEmployees() {
 async function fetchDepartments() {
   try {
     const res = await departmentService.getAll()
-    const raw = res.data?.data ?? (res.data as any)
+    const raw: any = res.data?.data ?? (res.data as any)
     departments.value = Array.isArray(raw) ? raw : (raw?.content ?? [])
   } catch {
     // departments optional for filter — silent fail

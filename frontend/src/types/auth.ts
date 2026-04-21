@@ -17,4 +17,5 @@ export type LoginResponse = TokenResponse
 export interface User {
   username: string
   role: string
+  avatarUrl?: string
 }

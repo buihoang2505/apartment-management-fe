@@ -1,13 +1,14 @@
 import http from './http'
-import type { LoginRequest, TokenResponse, User } from '@/types/auth'
+import type { LoginRequest, TokenResponse } from '@/types/auth'
 import type { CommonResponse } from '@/types/common'
+import type { AdminUserResponse } from '@/types/adminUser'
 
 const authService = {
   login(credentials: LoginRequest): Promise<{ data: CommonResponse<TokenResponse> }> {
     return http.post('/auth/login', credentials)
   },
 
-  getMe(): Promise<{ data: CommonResponse<User> }> {
+  getMe(): Promise<{ data: CommonResponse<AdminUserResponse> }> {
     return http.get('/admin/users/me')
   },
 }

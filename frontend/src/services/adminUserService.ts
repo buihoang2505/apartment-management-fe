@@ -19,8 +19,15 @@ const adminUserService = {
     return http.delete(`/admin/users/${id}`)
   },
 
-  resetPassword(id: string, newPassword: string): Promise<{ data: CommonResponse<void> }> {
-    return http.patch(`/admin/users/${id}/reset-password`, { newPassword })
+  resetPassword(id: string, payload: { currentPassword?: string; newPassword: string }): Promise<{ data: CommonResponse<void> }> {
+    return http.patch(`/admin/users/${id}/reset-password`, payload)
+  },
+
+  uploadAvatar(id: string, file: File): Promise<{ data: CommonResponse<{ avatarUrl: string }> }> {
+    const fd = new FormData()
+    fd.append('file', file)
+    // Do NOT set Content-Type manually — let axios/browser set it with the correct boundary
+    return http.post(`/admin/users/${id}/avatar`, fd)
   },
 }
 

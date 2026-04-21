@@ -1,6 +1,6 @@
 import http from './http'
 import type { ApartmentResponse } from '@/types/apartment'
-import type { CommonResponse, PageResponse } from '@/types/common'
+import type { CommonResponse, PageResponse, ImageResponse } from '@/types/common'
 
 export interface ApartmentFilter {
   zoneId?: string
@@ -47,6 +47,17 @@ const apartmentService = {
 
   deleteById(id: string): Promise<{ data: CommonResponse<void> }> {
     return http.delete(`/apartments/${id}`)
+  },
+
+  uploadImages(id: string, files: File[]): Promise<{ data: CommonResponse<ImageResponse[]> }> {
+    const fd = new FormData()
+    files.forEach(f => fd.append('files', f))
+    // Do NOT set Content-Type manually — let axios/browser set it with the correct boundary
+    return http.post(`/apartments/${id}/images`, fd)
+  },
+
+  deleteImage(id: string, imageId: string): Promise<{ data: CommonResponse<void> }> {
+    return http.delete(`/apartments/${id}/images/${imageId}`)
   },
 }
 

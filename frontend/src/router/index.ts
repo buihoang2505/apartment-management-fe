@@ -70,6 +70,17 @@ const router = createRouter({
           name: 'PortfolioDetail',
           component: () => import('@/views/portfolio/PortfolioDetailView.vue'),
         },
+        // Profile
+        {
+          path: 'profile',
+          name: 'Profile',
+          component: () => import('@/views/profile/ProfileView.vue'),
+        },
+        {
+          path: 'profile/change-password',
+          name: 'ChangePassword',
+          component: () => import('@/views/profile/ChangePasswordView.vue'),
+        },
         // System
         {
           path: 'departments',
@@ -85,6 +96,7 @@ const router = createRouter({
           path: 'audit-logs',
           name: 'AuditLogs',
           component: () => import('@/views/system/AuditLogsView.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true },
         },
         {
           path: 'admin/users',
