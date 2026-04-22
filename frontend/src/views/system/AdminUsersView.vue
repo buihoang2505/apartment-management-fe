@@ -171,7 +171,6 @@
         </tbody>
       </table>
     </div>
-  </div>
 
   <!-- ── Modal Thêm/Sửa ── -->
   <Teleport to="body">
@@ -419,6 +418,7 @@
       </div>
     </Transition>
   </Teleport>
+</div>
 </template>
 
 <script setup lang="ts">

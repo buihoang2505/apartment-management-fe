@@ -38,7 +38,7 @@
 
     <!-- ── User info ── -->
     <div class="px-3 py-3 border-t border-white/[0.06]">
-      <div class="flex items-center gap-3 px-2 py-2.5 rounded-[10px] hover:bg-white/[0.05] transition-colors group cursor-pointer" @click="router.push('/profile')">
+      <div class="flex items-center gap-3 px-2 py-2.5 rounded-[10px] hover:bg-white/[0.05] transition-all duration-200 ease-in-out group cursor-pointer" @click="router.push('/profile')">
         <!-- Avatar -->
         <div class="w-8 h-8 rounded-full bg-[#A8845A] flex items-center justify-center flex-shrink-0 text-white text-xs font-semibold relative overflow-hidden">
           <span>{{ avatarInitial }}</span>
@@ -58,7 +58,7 @@
         <!-- Logout -->
         <button
           @click="handleLogout"
-          class="w-7 h-7 rounded-lg flex items-center justify-center text-white/25 hover:text-red-400 hover:bg-red-400/10 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+          class="w-7 h-7 rounded-lg flex items-center justify-center text-white/25 hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 ease-in-out flex-shrink-0 opacity-0 group-hover:opacity-100"
           title="Đăng xuất"
         >
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
@@ -119,14 +119,14 @@ const NavItem = defineComponent({
       return h(RouterLink, {
         to: props.to!,
         class: [
-          'flex items-center gap-2.5 px-3 py-2 rounded-[8px] text-[13.5px] font-medium transition-all duration-150 w-full',
+          'flex items-center gap-2.5 px-3 py-2 rounded-[8px] text-[13.5px] font-medium transition-all duration-200 ease-in-out w-full',
           active
             ? 'bg-[#A8845A] text-white shadow-sm'
             : 'text-white/50 hover:text-white/90 hover:bg-[#A8845A]/10',
         ],
       }, () => [
         h(props.icon as any, {
-          class: ['w-[18px] h-[18px] flex-shrink-0', active ? 'text-white' : 'text-white/40'],
+          class: ['w-[18px] h-[18px] flex-shrink-0 transition-colors duration-200', active ? 'text-white' : 'text-white/40'],
         }),
         h('span', { class: 'truncate' }, props.label),
       ])

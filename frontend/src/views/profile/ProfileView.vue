@@ -243,7 +243,6 @@
       <button @click="fetchProfile" class="text-sm text-[#A8845A] font-medium hover:underline">Thử lại</button>
     </div>
 
-  </div>
 
   <!-- Toast -->
   <Teleport to="body">
@@ -263,6 +262,7 @@
       </div>
     </Transition>
   </Teleport>
+</div>
 </template>
 
 <script setup lang="ts">

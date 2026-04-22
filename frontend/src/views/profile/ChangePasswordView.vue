@@ -202,7 +202,6 @@
       </form>
     </div>
 
-  </div>
 
   <!-- Toast -->
   <Teleport to="body">
@@ -222,6 +221,7 @@
       </div>
     </Transition>
   </Teleport>
+</div>
 </template>
 
 <script setup lang="ts">

@@ -120,7 +120,7 @@
             class="relative max-w-2xl w-full flex flex-col items-center"
           >
             <img
-              :src="images[activeIdx].url"
+              :src="getImageUrl(images[activeIdx].url)"
               :alt="images[activeIdx].label || `Ảnh ${activeIdx + 1}`"
               class="rounded-2xl object-cover max-h-[55vh] w-full shadow-2xl"
               @error="handleImgError"
@@ -175,7 +175,7 @@
             @click="goTo(idx)"
           >
             <img
-              :src="img.url"
+              :src="getImageUrl(img.url)"
               :alt="img.label || `Ảnh ${idx + 1}`"
               class="w-full h-full object-cover"
               @error="(e) => (e.target as HTMLImageElement).parentElement!.classList.add('bg-white/10')"
@@ -227,6 +227,12 @@ const activeIdx = ref(0)
 const showInfo = ref(false)
 const slideDir = ref('slide-right')
 const containerRef = ref<HTMLElement | null>(null)
+
+function getImageUrl(url: string) {
+  if (!url) return '/placeholder.jpg'
+  if (url.startsWith('http')) return url
+  return `http://localhost:8080${url}`
+}
 
 function formatPrice(v: number) {
   const ty = v / 1_000_000_000
@@ -285,6 +291,7 @@ async function fetchApartment() {
     const res = await apartmentService.getById(apartmentId.value)
     apartment.value = res.data.data
     images.value = [...(res.data.data.images ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)
+    console.log('[Gallery] images from API:', images.value)
     // Start at image index from query param if present
     const startIdx = Number(route.query.idx ?? 0)
     activeIdx.value = Math.min(startIdx, Math.max(0, images.value.length - 1))

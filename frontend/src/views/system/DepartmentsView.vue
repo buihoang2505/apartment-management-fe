@@ -107,7 +107,6 @@
         </div>
       </div>
     </div>
-  </div>
 
   <!-- Create / Edit Modal -->
   <Teleport to="body">
@@ -254,6 +253,7 @@
       </div>
     </Transition>
   </Teleport>
+</div>
 </template>
 
 <script setup lang="ts">

@@ -277,7 +277,6 @@
         </button>
       </div>
     </div>
-  </div>
 
   <!-- Delete confirm dialog -->
   <Teleport to="body">
@@ -316,6 +315,7 @@
       </div>
     </Transition>
   </Teleport>
+</div>
 </template>
 
 <script setup lang="ts">

@@ -166,7 +166,11 @@
 
       <!-- Scrollable content -->
       <main class="flex-1 overflow-y-auto">
-        <RouterView />
+        <RouterView v-slot="{ Component }">
+          <Transition name="page" mode="out-in">
+            <component :is="Component" :key="route.path" />
+          </Transition>
+        </RouterView>
       </main>
 
       <!-- Bottom nav — mobile only -->
