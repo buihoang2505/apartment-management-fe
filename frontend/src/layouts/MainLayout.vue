@@ -66,21 +66,10 @@
         <div class="flex items-center gap-1">
 
           <!-- Search -->
-          <button class="w-9 h-9 rounded-[10px] hover:bg-[#F5F6FA] flex items-center justify-center transition-colors" title="Tìm kiếm">
-            <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-              <circle cx="7.5" cy="7.5" r="5.5" stroke="#6B7280" stroke-width="1.5"/>
-              <path d="M12 12L15 15" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </button>
+          <GlobalSearch />
 
           <!-- Notification bell -->
-          <button class="w-9 h-9 rounded-[10px] hover:bg-[#F5F6FA] flex items-center justify-center transition-colors relative" title="Thông báo">
-            <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-              <path d="M8.5 2a5 5 0 0 1 5 5v3l1 2H3l1-2V7a5 5 0 0 1 5-5Z" stroke="#6B7280" stroke-width="1.5" stroke-linejoin="round"/>
-              <path d="M7 14a1.5 1.5 0 0 0 3 0" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-            <span class="absolute top-2 right-2 w-1.5 h-1.5 bg-[#A8845A] rounded-full" />
-          </button>
+          <NotificationDropdown />
 
           <!-- Divider -->
           <div class="w-px h-5 bg-[#E5E9EE] mx-1" />
@@ -134,16 +123,6 @@
                     </svg>
                     Thông tin cá nhân
                   </button>
-                  <button
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#414A4D] hover:bg-[#F5F6FA] transition-colors text-left"
-                    @click="navigate('/profile/change-password')"
-                  >
-                    <svg class="w-4 h-4 text-[#9CA3AF] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                    </svg>
-                    Đổi mật khẩu
-                  </button>
                 </div>
                 <div class="border-t border-[#E5E9EE] py-1">
                   <button
@@ -184,6 +163,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
+import GlobalSearch from '@/components/layout/GlobalSearch.vue'
+import NotificationDropdown from '@/components/layout/NotificationDropdown.vue'
 import { useAuthStore } from '@/stores/authStore'
 
 const route    = useRoute()
@@ -234,7 +215,6 @@ const routeMap: Record<string, RouteInfo> = {
   '/audit-logs':              { label: 'Lịch sử Audit',         parent: 'Hệ thống' },
   '/admin/users':             { label: 'Quản lý người dùng',    parent: 'Hệ thống' },
   '/profile':                 { label: 'Thông tin cá nhân',     parent: 'Tài khoản' },
-  '/profile/change-password': { label: 'Đổi mật khẩu',         parent: 'Tài khoản' },
 }
 
 function matchRoute(path: string): RouteInfo | undefined {

@@ -1,8 +1,8 @@
 <template>
-  <aside class="flex flex-col h-full w-[240px] bg-[#1C2526] select-none">
+  <aside class="flex flex-col h-full w-[240px] bg-[#1a2b3c] select-none">
 
     <!-- ── Logo ── -->
-    <div class="flex items-center gap-3 px-5 py-[18px] border-b border-white/[0.06]">
+    <div class="flex items-center gap-3 px-5 py-[18px] border-b border-[#243447]">
       <!-- Icon -->
       <div class="w-9 h-9 rounded-[10px] bg-[#A8845A] flex items-center justify-center flex-shrink-0">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -37,8 +37,8 @@
     </nav>
 
     <!-- ── User info ── -->
-    <div class="px-3 py-3 border-t border-white/[0.06]">
-      <div class="flex items-center gap-3 px-2 py-2.5 rounded-[10px] hover:bg-white/[0.05] transition-all duration-200 ease-in-out group cursor-pointer" @click="router.push('/profile')">
+    <div class="px-3 py-3 border-t border-[#243447]">
+      <div class="flex items-center gap-3 px-2 py-2.5 rounded-[10px] hover:bg-[#243447] transition-all duration-200 ease-in-out group cursor-pointer" @click="router.push('/profile')">
         <!-- Avatar -->
         <div class="w-8 h-8 rounded-full bg-[#A8845A] flex items-center justify-center flex-shrink-0 text-white text-xs font-semibold relative overflow-hidden">
           <span>{{ avatarInitial }}</span>
@@ -119,14 +119,14 @@ const NavItem = defineComponent({
       return h(RouterLink, {
         to: props.to!,
         class: [
-          'flex items-center gap-2.5 px-3 py-2 rounded-[8px] text-[13.5px] font-medium transition-all duration-200 ease-in-out w-full',
+          'flex items-center gap-2.5 px-3 py-2 rounded-[8px] text-[13.5px] font-medium transition-all duration-200 ease-in-out w-full border-l-[3px]',
           active
-            ? 'bg-[#A8845A] text-white shadow-sm'
-            : 'text-white/50 hover:text-white/90 hover:bg-[#A8845A]/10',
+            ? 'bg-[#2d4057] text-white border-[#c9a96e]'
+            : 'text-[#94a3b8] hover:text-white hover:bg-[#243447] border-transparent',
         ],
       }, () => [
         h(props.icon as any, {
-          class: ['w-[18px] h-[18px] flex-shrink-0 transition-colors duration-200', active ? 'text-white' : 'text-white/40'],
+          class: ['w-[18px] h-[18px] flex-shrink-0 transition-colors duration-200', active ? 'text-white' : 'text-[#c9a96e]'],
         }),
         h('span', { class: 'truncate' }, props.label),
       ])
@@ -220,7 +220,7 @@ const auditLogsNav = {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 1.5px;
-  color: rgba(255,255,255,0.25);
+  color: #4a6080;
   text-transform: uppercase;
   padding: 0 12px;
   margin-bottom: 4px;

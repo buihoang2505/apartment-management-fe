@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'sockjs-client': 'sockjs-client/dist/sockjs.min.js',
     },
   },
 })

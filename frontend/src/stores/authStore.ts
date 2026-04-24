@@ -28,16 +28,6 @@ export const useAuthStore = defineStore('auth', () => {
 
     localStorage.setItem('token', data.token)
     localStorage.setItem('user', JSON.stringify(user.value))
-
-    // Nếu login không trả về role → gọi thêm /admin/users/me
-    if (!data.role) {
-      try {
-        const me = await authService.getMe()
-        const meData = me.data?.data ?? me.data
-        user.value = { username: meData.username ?? data.username, role: meData.role ?? 'USER' }
-        localStorage.setItem('user', JSON.stringify(user.value))
-      } catch { /* giữ nguyên */ }
-    }
   }
 
   function updateUser(patch: Partial<User>) {

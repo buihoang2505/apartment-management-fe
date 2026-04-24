@@ -9,7 +9,11 @@ const authService = {
   },
 
   getMe(): Promise<{ data: CommonResponse<AdminUserResponse> }> {
-    return http.get('/users/me')
+    return http.get('/admin/users/me')
+  },
+
+  changePassword(payload: { currentPassword: string; newPassword: string }): Promise<{ data: CommonResponse<void> }> {
+    return http.patch('/users/me/change-password', payload)
   },
 }
 

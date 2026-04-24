@@ -51,11 +51,12 @@
           <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
         </div>
         <div v-else>
-          <p
-            class="font-bold leading-none"
-            :class="[growthTextClass, growthValue == null ? 'text-lg mt-2' : 'text-4xl']"
-          >{{ growthLabel }}</p>
-          <p class="text-[#7DA5BE] text-sm mt-1">Tăng trưởng tồn kho tháng {{ currentMonth }}</p>
+          <p v-if="marketPrimary" class="font-bold leading-none"
+            :class="[marketTextClass, marketIsCount ? 'text-4xl' : 'text-4xl']">
+            {{ marketPrimary }}<span v-if="marketIsCount" class="text-xl ml-1 font-medium">căn</span>
+          </p>
+          <p v-else class="text-white/40 text-lg mt-2 font-bold">Chưa có dữ liệu</p>
+          <p class="text-[#7DA5BE] text-sm mt-1">{{ marketSubtitle }}</p>
         </div>
       </div>
     </div>
@@ -272,10 +273,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import dashboardService from '@/services/dashboardService'
 import portfolioService from '@/services/portfolioService'
+import { useToastStore } from '@/stores/toastStore'
 import type { DashboardStatsResponse } from '@/types/dashboard'
 import type { Portfolio } from '@/types/portfolio'
 
 const router = useRouter()
+const toastStore = useToastStore()
 const loading = ref({ stats: true, portfolios: true })
 const stats = ref<DashboardStatsResponse | null>(null)
 const portfolios = ref<Portfolio[]>([])
@@ -285,28 +288,38 @@ const newTransactions = ref(14)
 const latestZone = ref('Lumi Hà Nội')
 const currentMonth = computed(() => new Date().getMonth() + 1)
 
-const growthValue = computed<number | null>(() => {
-  const growth = stats.value?.growth
-  if (!growth || !growth.lastMonth || growth.percentage == null) return null
-  return growth.percentage
-})
-
-const growthLabel = computed(() => {
-  const p = growthValue.value
-  if (p == null) return 'Chưa có dữ liệu'
-  return (p >= 0 ? '+' : '') + p.toFixed(1) + '%'
-})
-
-const growthTextClass = computed(() => {
-  const p = growthValue.value
-  if (p == null) return 'text-white/40'
-  return p >= 0 ? 'text-emerald-400' : 'text-red-400'
-})
-
 const growthPill = computed(() => {
   const growth = stats.value?.growth
   if (!growth?.lastMonth) return null
   return growth.percentage ?? null
+})
+
+// Card Thị Trường — hiển thị % nếu có, fallback sang số căn tháng này
+const marketPrimary = computed(() => {
+  const growth = stats.value?.growth
+  if (!growth) return null
+  if (growth.percentage != null) return (growth.percentage >= 0 ? '+' : '') + growth.percentage.toFixed(1) + '%'
+  if (growth.thisMonth > 0) return String(growth.thisMonth)
+  return null
+})
+
+const marketIsCount = computed(() => {
+  const growth = stats.value?.growth
+  return growth?.percentage == null && (growth?.thisMonth ?? 0) > 0
+})
+
+const marketSubtitle = computed(() => {
+  const growth = stats.value?.growth
+  const m = currentMonth.value
+  if (growth?.percentage != null) return `Tăng trưởng tồn kho tháng ${m}`
+  if (growth && growth.thisMonth > 0) return `Căn hộ mới tháng ${m}`
+  return `Tháng ${m}`
+})
+
+const marketTextClass = computed(() => {
+  const p = stats.value?.growth?.percentage
+  if (p == null) return 'text-white'
+  return p >= 0 ? 'text-emerald-400' : 'text-red-400'
 })
 
 function togglePortfolio(id: string) {
@@ -339,7 +352,9 @@ async function fetchStats() {
   try {
     const res = await dashboardService.getStats()
     stats.value = res.data.data
-  } catch { /* silent */ } finally {
+  } catch {
+    toastStore.show('Không thể tải thống kê, vui lòng thử lại', 'error')
+  } finally {
     loading.value.stats = false
   }
 }
@@ -349,7 +364,9 @@ async function fetchPortfolios() {
     const res = await portfolioService.getAll()
     portfolios.value = res.data.data ?? []
     if (portfolios.value.length) expandedPortfolio.value = portfolios.value[0].id
-  } catch { /* silent */ } finally {
+  } catch {
+    toastStore.show('Không thể tải danh sách portfolio, vui lòng thử lại', 'error')
+  } finally {
     loading.value.portfolios = false
   }
 }

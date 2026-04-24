@@ -38,20 +38,6 @@
 
       <button
         :disabled="selectedIds.size === 0"
-        class="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border transition-colors"
-        :class="selectedIds.size > 0
-          ? 'bg-[#A8845A] border-[#A8845A] text-white hover:bg-[#8f6d49]'
-          : 'bg-white border-[#E8EFF5] text-[#C5D5DF] cursor-not-allowed'"
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M1 7h12M7 1v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/>
-        </svg>
-        Di chuyển
-      </button>
-
-      <button
-        :disabled="selectedIds.size === 0"
         @click="handleBulkDelete"
         class="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border transition-colors"
         :class="selectedIds.size > 0
@@ -315,6 +301,7 @@
       </div>
     </Transition>
   </Teleport>
+
 </div>
 </template>
 
@@ -475,7 +462,7 @@ async function fetchApartments() {
   error.value = ''
   try {
     const res = await apartmentService.getList({
-      search: searchInput.value || undefined,
+      search: searchInput.value.trim() || undefined,
       zoneId: filter.zoneId || undefined,
       status: filter.status || undefined,
       type: filter.type || undefined,

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import { useAuthStore } from '@/stores/authStore'
+import { useToastStore } from '@/stores/toastStore'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -70,11 +71,6 @@ const router = createRouter({
           name: 'Profile',
           component: () => import('@/views/profile/ProfileView.vue'),
         },
-        {
-          path: 'profile/change-password',
-          name: 'ChangePassword',
-          component: () => import('@/views/profile/ChangePasswordView.vue'),
-        },
         // System
         {
           path: 'departments',
@@ -117,6 +113,7 @@ router.beforeEach((to) => {
     // Restore user từ localStorage nếu store chưa có (cold reload)
     if (!authStore.user) authStore.initAuth()
     if (!authStore.isAdmin) {
+      useToastStore().show('Bạn không có quyền truy cập trang này', 'error')
       return { path: '/' }
     }
   }

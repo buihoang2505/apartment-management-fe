@@ -779,20 +779,34 @@ function formatPrice(v: number | null) {
 // Load buildings when zone changes
 async function onZoneChange() {
   form.buildingId = ''
-  buildings.value = []
   errors.buildingId = ''
   if (!selectedZoneId.value) return
+  await loadBuildingsByZone(selectedZoneId.value)
+}
+
+async function loadBuildingsByZone(zoneId: string) {
+  buildings.value = []
+  if (!zoneId) return
   loadingBuildings.value = true
   try {
-    const res = await zoneService.getBuildingsByZone(selectedZoneId.value)
+    const res = await zoneService.getBuildingsByZone(zoneId)
     buildings.value = res.data.data ?? []
-  } catch { /* silent */ } finally {
+  } catch {
+    buildings.value = []
+  } finally {
     loadingBuildings.value = false
   }
 }
 
 // Populate form from API response
-function populateForm(apt: ApartmentResponse) {
+async function populateForm(apt: ApartmentResponse) {
+  const aptAny = apt as ApartmentResponse & {
+    building?: { id?: string }
+    zone?: { id?: string }
+  }
+  const zoneIdFromApi = apt.zoneId ?? aptAny.zone?.id ?? ''
+  const buildingIdFromApi = apt.buildingId ?? aptAny.building?.id ?? ''
+
   form.unitCode = apt.unitCode ?? ''
   form.displayCode = apt.displayCode ?? ''
   form.area = apt.area ?? null
@@ -805,15 +819,19 @@ function populateForm(apt: ApartmentResponse) {
   form.direction = apt.direction ?? ''
   form.bedroomCount = apt.bedroomCount ?? null
   form.statusNote = ''
-  form.buildingId = apt.buildingId ?? ''
+  form.buildingId = ''
   form.images = (apt.images ?? []).map((img, i) => ({
     id: img.id,
     url: img.url,
     label: img.label ?? '',
     sortOrder: img.sortOrder ?? i,
   }))
-  selectedZoneId.value = apt.zoneId ?? ''
-  if (apt.zoneId) onZoneChange()
+  selectedZoneId.value = zoneIdFromApi
+
+  if (zoneIdFromApi) {
+    await loadBuildingsByZone(zoneIdFromApi)
+    form.buildingId = buildings.value.some((b) => b.id === buildingIdFromApi) ? buildingIdFromApi : ''
+  }
 }
 
 // Image helpers
@@ -835,7 +853,12 @@ async function removeImage(idx: number) {
 }
 
 async function handleFileUpload(event: Event) {
-  if (isNew.value || !apartmentId.value) return
+  if (isNew.value || !apartmentId.value) {
+    showToast('error', 'Vui lòng lưu căn hộ trước, sau đó mới có thể upload ảnh')
+    const input = event.target as HTMLInputElement
+    input.value = ''
+    return
+  }
   const input = event.target as HTMLInputElement
   const files = Array.from(input.files ?? [])
   if (!files.length) return
@@ -927,7 +950,7 @@ function executeDiscard() {
   if (isNew.value) {
     router.push('/apartments')
   } else if (original.value) {
-    populateForm(original.value)
+    void populateForm(original.value)
   }
 }
 
@@ -954,7 +977,7 @@ onMounted(async () => {
     try {
       const res = await apartmentService.getById(apartmentId.value)
       original.value = res.data.data
-      populateForm(res.data.data)
+      await populateForm(res.data.data)
     } catch {
       pageError.value = 'Không thể tải thông tin căn hộ.'
     } finally {

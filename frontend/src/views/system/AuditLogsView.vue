@@ -104,7 +104,6 @@
               <th class="th">Người dùng</th>
               <th class="th">Hành động</th>
               <th class="th">Đối tượng</th>
-              <th class="th hidden lg:table-cell">IP</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-[#F3F4F6]">
@@ -161,15 +160,10 @@
                 </div>
                 <span v-else class="text-[#9CA3AF] text-[12px]">—</span>
               </td>
-
-              <!-- IP -->
-              <td class="td hidden lg:table-cell">
-                <span class="font-mono text-[12px] text-[#9CA3AF]">{{ log.ipAddress || '—' }}</span>
-              </td>
             </tr>
 
             <tr v-if="pagedLogs.length === 0">
-              <td colspan="5" class="px-5 py-12 text-center">
+              <td colspan="4" class="px-5 py-12 text-center">
                 <p class="text-[#9CA3AF] text-sm">Không tìm thấy bản ghi nào</p>
                 <button v-if="hasActiveFilter" @click="clearFilters" class="mt-2 text-[13px] text-[#A8845A] underline">
                   Xoá bộ lọc
@@ -410,7 +404,6 @@ const filteredLogs = computed(() => {
     list = list.filter(l =>
       (l.entityType?.toLowerCase().includes(q)) ||
       (l.entityId?.toLowerCase().includes(q)) ||
-      (l.ipAddress?.toLowerCase().includes(q)) ||
       formatEntityType(l.entityType).toLowerCase().includes(q)
     )
   }
@@ -456,7 +449,14 @@ onMounted(async () => {
   try {
     const res = await auditService.getAll(0, 500)
     const raw = res.data?.data ?? (res.data as any)
-    allLogs.value = Array.isArray(raw) ? raw : (raw?.content ?? [])
+    const auditLogs = Array.isArray(raw) ? raw : (raw?.content ?? [])
+    allLogs.value = auditLogs
+
+    if (auditLogs.length > 0) {
+      console.log('auditLogs[0]', auditLogs[0])
+      const fieldNames = Object.keys(auditLogs[0] ?? {})
+      console.log('auditLogs[0] field names:', fieldNames)
+    }
   } catch {
     error.value = 'Không thể tải dữ liệu audit. Vui lòng thử lại.'
   } finally {
