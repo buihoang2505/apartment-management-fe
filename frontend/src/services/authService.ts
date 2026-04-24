@@ -9,7 +9,7 @@ const authService = {
   },
 
   getMe(): Promise<{ data: CommonResponse<AdminUserResponse> }> {
-    return http.get('/admin/users/me')
+    return http.get('/users/me')
   },
 }
 

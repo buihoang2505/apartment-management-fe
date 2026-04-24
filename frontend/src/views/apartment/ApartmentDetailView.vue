@@ -300,7 +300,7 @@
                 v-for="(img, idx) in form.images"
                 :key="img.id ?? idx"
                 class="relative aspect-square rounded-xl overflow-hidden bg-[#F0F4F8] group cursor-pointer"
-                @click="openGallery"
+                @click="openGallery(idx)"
               >
                 <img
                   :src="imageDisplayUrl(img.url)"
@@ -373,7 +373,7 @@
             <button
               v-if="!isNew && form.images.length"
               type="button"
-              @click="openGallery"
+              @click="openGallery(0)"
               class="mt-3 w-full py-2 border border-[#E8EFF5] rounded-xl text-[#414A4D] text-xs font-medium hover:bg-[#F0F4F8] transition-colors flex items-center justify-center gap-1.5"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -417,6 +417,132 @@
         </div>
       </div>
     </form>
+
+  <!-- ── Gallery overlay ── -->
+  <Teleport to="body">
+    <Transition name="gallery-fade">
+      <div
+        v-if="showGallery"
+        class="fixed inset-0 bg-[#0A1A2E] flex flex-col z-[100] select-none"
+        tabindex="0"
+        ref="galleryContainerRef"
+      >
+        <!-- Top bar -->
+        <div class="flex items-center justify-between px-5 pt-10 pb-3 flex-shrink-0">
+          <span class="text-white/60 text-sm font-medium">
+            {{ galleryImages.length ? `${galleryIdx + 1} / ${galleryImages.length}` : '' }}
+          </span>
+          <div class="flex items-center gap-2">
+            <button
+              class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              title="Chia sẻ" @click="galleryShare"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="13" cy="3" r="2" stroke="white" stroke-width="1.4"/>
+                <circle cx="3" cy="8" r="2" stroke="white" stroke-width="1.4"/>
+                <circle cx="13" cy="13" r="2" stroke="white" stroke-width="1.4"/>
+                <path d="M5 7l6-3M5 9l6 3" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button
+              class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              title="Đóng" @click="closeGallery"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- No images -->
+        <div v-if="!galleryImages.length" class="flex-1 flex items-center justify-center">
+          <p class="text-white/50 text-lg">Chưa có ảnh nào</p>
+        </div>
+
+        <!-- Main image area -->
+        <div v-else class="flex-1 flex flex-col min-h-0">
+          <div
+            class="flex-1 relative flex items-center justify-center px-4 min-h-0"
+            @click="handleGalleryMainClick"
+          >
+            <button
+              v-if="galleryImages.length > 1"
+              @click.stop="galleryPrev"
+              class="absolute left-4 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center transition-colors"
+              :class="galleryIdx === 0 ? 'opacity-30 cursor-default' : ''"
+            >
+              <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
+                <path d="M7 1L1 7l6 6" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+
+            <Transition :name="gallerySlideDir" mode="out-in">
+              <div :key="galleryIdx" class="relative max-w-2xl w-full flex flex-col items-center">
+                <img
+                  :src="imageDisplayUrl(galleryImages[galleryIdx].url)"
+                  :alt="galleryImages[galleryIdx].label || `Ảnh ${galleryIdx + 1}`"
+                  class="rounded-2xl object-cover max-h-[55vh] w-full shadow-2xl"
+                  @error="(e) => ((e.target as HTMLImageElement).style.display = 'none')"
+                />
+                <div
+                  v-if="galleryImages[galleryIdx].label"
+                  class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#0F2E4A]/80 backdrop-blur-sm text-white text-xs font-medium px-4 py-1.5 rounded-full whitespace-nowrap"
+                >
+                  {{ galleryImages[galleryIdx].label }}
+                </div>
+              </div>
+            </Transition>
+
+            <button
+              v-if="galleryImages.length > 1"
+              @click.stop="galleryNext"
+              class="absolute right-4 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center transition-colors"
+              :class="galleryIdx === galleryImages.length - 1 ? 'opacity-30 cursor-default' : ''"
+            >
+              <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
+                <path d="M1 1l6 6-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Thumbnail strip -->
+          <div class="flex-shrink-0 px-4 pb-8 pt-3">
+            <div class="flex gap-2 overflow-x-auto gallery-scrollbar-hide justify-center">
+              <button
+                v-for="(img, idx) in galleryImages.slice(0, GALLERY_MAX_THUMBS)"
+                :key="idx"
+                class="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden transition-all duration-200 ring-2 ring-offset-2 ring-offset-[#0A1A2E]"
+                :class="idx === galleryIdx ? 'ring-[#A8845A] scale-105' : 'ring-transparent opacity-50 hover:opacity-80'"
+                @click="galleryGoTo(idx)"
+              >
+                <img
+                  :src="imageDisplayUrl(img.url)"
+                  :alt="img.label || `Ảnh ${idx + 1}`"
+                  class="w-full h-full object-cover"
+                  @error="(e) => ((e.target as HTMLImageElement).parentElement!.classList.add('bg-white/10'))"
+                />
+              </button>
+              <div
+                v-if="galleryImages.length > GALLERY_MAX_THUMBS"
+                class="flex-shrink-0 w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center text-white/60 text-xs font-bold"
+              >
+                +{{ galleryImages.length - GALLERY_MAX_THUMBS }}
+              </div>
+            </div>
+            <div v-if="galleryImages.length <= 8 && galleryImages.length > 1" class="flex justify-center gap-1.5 mt-3">
+              <span
+                v-for="(_, idx) in galleryImages"
+                :key="idx"
+                class="rounded-full transition-all duration-200"
+                :class="idx === galleryIdx ? 'w-4 h-1.5 bg-[#A8845A]' : 'w-1.5 h-1.5 bg-white/30'"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 
   <!-- Discard confirm dialog -->
   <Teleport to="body">
@@ -462,7 +588,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, defineComponent, h } from 'vue'
+import { ref, reactive, computed, watch, onMounted, nextTick, defineComponent, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import apartmentService from '@/services/apartmentService'
 import zoneService from '@/services/zoneService'
@@ -541,6 +667,64 @@ const imageFileInput = ref<HTMLInputElement | null>(null)
 const uploadingImages = ref(false)
 const deletingImageId = ref<string | null>(null)
 const BASE_URL = 'http://localhost:8080'
+
+// ── Gallery overlay ──────────────────────────────────
+const showGallery = ref(false)
+const galleryIdx = ref(0)
+const gallerySlideDir = ref('gallery-slide-right')
+const galleryContainerRef = ref<HTMLElement | null>(null)
+const GALLERY_MAX_THUMBS = 6
+
+const galleryImages = computed(() =>
+  [...form.images].sort((a, b) => a.sortOrder - b.sortOrder)
+)
+
+function galleryGoTo(idx: number) {
+  if (idx === galleryIdx.value) return
+  gallerySlideDir.value = idx > galleryIdx.value ? 'gallery-slide-right' : 'gallery-slide-left'
+  galleryIdx.value = idx
+}
+function galleryNext() {
+  if (galleryIdx.value < galleryImages.value.length - 1) galleryGoTo(galleryIdx.value + 1)
+}
+function galleryPrev() {
+  if (galleryIdx.value > 0) galleryGoTo(galleryIdx.value - 1)
+}
+function handleGalleryMainClick(e: MouseEvent) {
+  const w = (e.currentTarget as HTMLElement).offsetWidth
+  if (e.clientX < w / 2) galleryPrev(); else galleryNext()
+}
+function galleryShare() {
+  if (navigator.share) navigator.share({ url: window.location.href }).catch(() => {})
+  else navigator.clipboard?.writeText(window.location.href)
+}
+
+let galleryTouchStartX = 0
+function galleryTouchStart(e: TouchEvent) { galleryTouchStartX = e.touches[0].clientX }
+function galleryTouchEnd(e: TouchEvent) {
+  const dx = e.changedTouches[0].clientX - galleryTouchStartX
+  if (Math.abs(dx) > 50) dx < 0 ? galleryNext() : galleryPrev()
+}
+function galleryKeyDown(e: KeyboardEvent) {
+  if (e.key === 'ArrowLeft') galleryPrev()
+  else if (e.key === 'ArrowRight') galleryNext()
+  else if (e.key === 'Escape') closeGallery()
+}
+
+watch(showGallery, (open) => {
+  if (open) {
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', galleryKeyDown)
+    document.addEventListener('touchstart', galleryTouchStart, { passive: true })
+    document.addEventListener('touchend', galleryTouchEnd, { passive: true })
+    nextTick(() => galleryContainerRef.value?.focus())
+  } else {
+    document.body.style.overflow = ''
+    document.removeEventListener('keydown', galleryKeyDown)
+    document.removeEventListener('touchstart', galleryTouchStart)
+    document.removeEventListener('touchend', galleryTouchEnd)
+  }
+})
 
 function imageDisplayUrl(url: string) {
   if (!url) return ''
@@ -670,10 +854,14 @@ async function handleFileUpload(event: Event) {
     input.value = ''
   }
 }
-function openGallery() {
-  if (!isNew.value && apartmentId.value) {
-    router.push(`/apartments/${apartmentId.value}/gallery`)
-  }
+function openGallery(startIdx = 0) {
+  if (isNew.value || !form.images.length) return
+  galleryIdx.value = Math.min(startIdx, form.images.length - 1)
+  gallerySlideDir.value = 'gallery-slide-right'
+  showGallery.value = true
+}
+function closeGallery() {
+  showGallery.value = false
 }
 
 // Validate
@@ -783,6 +971,22 @@ onMounted(async () => {
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* Gallery overlay */
+.gallery-fade-enter-active, .gallery-fade-leave-active { transition: opacity 0.2s ease; }
+.gallery-fade-enter-from, .gallery-fade-leave-to { opacity: 0; }
+
+.gallery-slide-right-enter-active, .gallery-slide-right-leave-active,
+.gallery-slide-left-enter-active,  .gallery-slide-left-leave-active {
+  transition: all 0.25s ease;
+}
+.gallery-slide-right-enter-from { opacity: 0; transform: translateX(40px); }
+.gallery-slide-right-leave-to   { opacity: 0; transform: translateX(-40px); }
+.gallery-slide-left-enter-from  { opacity: 0; transform: translateX(-40px); }
+.gallery-slide-left-leave-to    { opacity: 0; transform: translateX(40px); }
+
+.gallery-scrollbar-hide { scrollbar-width: none; }
+.gallery-scrollbar-hide::-webkit-scrollbar { display: none; }
 
 .toast-enter-active { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 .toast-leave-active { transition: all 0.2s ease; }

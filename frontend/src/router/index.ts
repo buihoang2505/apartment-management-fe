@@ -42,12 +42,6 @@ const router = createRouter({
           name: 'ApartmentDetail',
           component: () => import('@/views/apartment/ApartmentDetailView.vue'),
         },
-        {
-          path: 'apartments/:id/gallery',
-          name: 'ApartmentGallery',
-          // Render ngoài MainLayout bằng fixed overlay trong component
-          component: () => import('@/views/apartment/ApartmentGalleryView.vue'),
-        },
         // Zones
         {
           path: 'zones',

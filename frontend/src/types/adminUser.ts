@@ -1,4 +1,4 @@
-export type UserRole   = 'ADMIN' | 'MANAGER'
+export type UserRole = 'ADMIN' | 'MANAGER'
 
 export interface AdminUserResponse {
   id: string
@@ -10,4 +10,13 @@ export interface AdminUserResponse {
   active: boolean
   avatarUrl?: string
   createdAt: string
+  headline?: string
+  biography?: string
+  language?: string
+  website?: string
+  facebook?: string
+  instagram?: string
+  linkedin?: string
+  tiktok?: string
+  github?: string
 }

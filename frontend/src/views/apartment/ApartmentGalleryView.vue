@@ -310,6 +310,7 @@ function onKeyDown(e: KeyboardEvent) {
 }
 
 onMounted(async () => {
+  document.body.style.overflow = 'hidden'
   await fetchApartment()
   await nextTick()
   containerRef.value?.focus()
@@ -319,6 +320,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  document.body.style.overflow = ''
   document.removeEventListener('keydown', onKeyDown)
   document.removeEventListener('touchstart', onTouchStart)
   document.removeEventListener('touchend', onTouchEnd)
