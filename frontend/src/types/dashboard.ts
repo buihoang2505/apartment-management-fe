@@ -2,6 +2,7 @@ export interface GrowthStats {
   thisMonth: number
   lastMonth: number
   percentage: number | null
+  label: string
 }
 
 export interface DashboardStatsResponse {

@@ -9,6 +9,15 @@ export default {
         tertiary:  { DEFAULT: '#A9B8A8', light: '#F0F5F0' },
         surface:   { DEFAULT: '#FFFFFF', bg: '#F5F6FA', border: '#E5E9EE' },
         ink:       { DEFAULT: '#1A1A2E', muted: '#6B7280', faint: '#9CA3AF' },
+        el: {
+          primary:   '#1A4D6D',
+          secondary: '#546E7A',
+          tertiary:  '#00897B',
+          neutral:   '#455A64',
+          bg:        '#DCE9F0',
+          surface:   '#EEF5F9',
+          border:    '#B8D0DE',
+        },
       },
       borderRadius: {
         card: '12px',
@@ -28,9 +37,29 @@ export default {
         'caption': ['12px', { fontWeight: '400', lineHeight: '1.4', color: '#6B7280' }],
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'sans-serif'],
+        sans:    ['Inter', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'sans-serif'],
+        manrope: ['Manrope', 'sans-serif'],
+        inter:   ['Inter', 'sans-serif'],
+      },
+      animation: {
+        blob: 'blob 7s infinite',
+      },
+      keyframes: {
+        blob: {
+          '0%':   { transform: 'translate(0px, 0px) scale(1)' },
+          '33%':  { transform: 'translate(30px, -20px) scale(1.1)' },
+          '66%':  { transform: 'translate(-20px, 20px) scale(0.9)' },
+          '100%': { transform: 'translate(0px, 0px) scale(1)' },
+        },
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function ({ addUtilities }) {
+      addUtilities({
+        '.animation-delay-2000': { 'animation-delay': '2s' },
+        '.animation-delay-4000': { 'animation-delay': '4s' },
+      })
+    },
+  ],
 }

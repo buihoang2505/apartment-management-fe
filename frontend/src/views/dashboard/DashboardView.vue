@@ -70,11 +70,14 @@
           <template v-else>
             <span class="text-[#0F2E4A] font-bold text-4xl">{{ stats?.total?.toLocaleString('vi') ?? '—' }}</span>
             <span
-              v-if="growthPill != null"
+              v-if="growthPill !== null"
               class="text-xs font-semibold px-2 py-0.5 rounded-full"
-              :class="growthPill >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'"
+              :class="growthPill === 'N/A' ? 'bg-gray-100 text-gray-500'
+                    : Number(growthPill) >= 0 ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-red-100 text-red-600'"
             >
-              {{ growthPill >= 0 ? '+' : '' }}{{ growthPill.toFixed(0) }}%
+              <template v-if="growthPill === 'N/A'">—</template>
+              <template v-else>{{ Number(growthPill) >= 0 ? '+' : '' }}{{ Number(growthPill).toFixed(0) }}%</template>
             </span>
           </template>
         </div>
@@ -290,8 +293,13 @@ const currentMonth = computed(() => new Date().getMonth() + 1)
 
 const growthPill = computed(() => {
   const growth = stats.value?.growth
-  if (!growth?.lastMonth) return null
-  return growth.percentage ?? null
+  if (!growth) return null
+  // Nếu backend trả về percentage=null, nghĩa là không có dữ liệu tháng trước để so sánh
+  if (growth.percentage === null || growth.percentage === undefined) {
+    // Chỉ hiện badge N/A nếu tháng này có dữ liệu (để phân biệt với "chưa có gì")
+    return growth.thisMonth > 0 ? 'N/A' : null
+  }
+  return growth.percentage
 })
 
 // Card Thị Trường — hiển thị % nếu có, fallback sang số căn tháng này
@@ -311,8 +319,11 @@ const marketIsCount = computed(() => {
 const marketSubtitle = computed(() => {
   const growth = stats.value?.growth
   const m = currentMonth.value
-  if (growth?.percentage != null) return `Tăng trưởng tồn kho tháng ${m}`
-  if (growth && growth.thisMonth > 0) return `Căn hộ mới tháng ${m}`
+  if (!growth) return `Tháng ${m}`
+  // Ưu tiên dùng label từ backend (đã xử lý edge case)
+  if (growth.label) return growth.label
+  if (growth.percentage != null) return `Tăng trưởng tồn kho tháng ${m}`
+  if (growth.thisMonth > 0) return `Căn hộ mới tháng ${m}`
   return `Tháng ${m}`
 })
 
