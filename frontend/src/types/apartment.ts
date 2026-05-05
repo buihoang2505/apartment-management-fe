@@ -4,14 +4,23 @@ export type ApartmentStatus = 'DANG_BAN' | 'DA_COC' | 'DA_BAN' | 'GIU_CHO' | 'KH
 
 export type ApartmentType =
   | 'STUDIO'
-  | 'ONE_BR'
-  | 'TWO_BR'
-  | 'TWO_BR_PLUS'
-  | 'THREE_BR'
-  | 'THREE_BR_PLUS'
+  | 'ONE_BEDROOM'
+  | 'TWO_BEDROOM'
+  | 'TWO_BEDROOM_PLUS'
+  | 'THREE_BEDROOM'
+  | 'THREE_BEDROOM_PLUS'
   | 'PENTHOUSE'
   | 'DUPLEX'
   | 'OTHER'
+
+export interface ApartmentStatusHistoryResponse {
+  id: string
+  oldStatus: ApartmentStatus | null
+  newStatus: ApartmentStatus
+  changedBy: string
+  note: string
+  createdAt: string
+}
 
 export interface ApartmentResponse {
   id: string

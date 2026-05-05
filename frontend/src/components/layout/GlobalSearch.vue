@@ -27,7 +27,7 @@
           v-model="keyword"
           type="text"
           placeholder="Tìm căn hộ, nhân viên, portfolio..."
-          class="w-[260px] sm:w-[340px] pl-9 pr-8 py-2 bg-[#F5F6FA] border border-[#E5E9EE] rounded-[10px] text-sm text-[#414A4D] outline-none focus:border-[#A8845A] focus:bg-white transition-all placeholder:text-[#C5D5DF]"
+          class="w-[160px] sm:w-[260px] md:w-[340px] pl-9 pr-8 py-2 bg-[#F5F6FA] border border-[#E5E9EE] rounded-[10px] text-sm text-[#414A4D] outline-none focus:border-[#A8845A] focus:bg-white transition-all placeholder:text-[#C5D5DF]"
           @keydown.escape="close"
         />
         <button
@@ -44,7 +44,7 @@
       <!-- Dropdown -->
       <div
         v-if="keyword.length >= 2"
-        class="absolute right-0 mt-2 w-[380px] bg-white rounded-xl border border-[#E5E9EE] z-[60] max-h-[420px] overflow-y-auto"
+        class="absolute right-0 mt-2 w-[300px] sm:w-[380px] max-w-[calc(100vw-24px)] bg-white rounded-xl border border-[#E5E9EE] z-[60] max-h-[420px] overflow-y-auto"
         style="box-shadow: 0 8px 24px rgba(0,0,0,0.12); top: 100%;"
       >
         <!-- Loading -->

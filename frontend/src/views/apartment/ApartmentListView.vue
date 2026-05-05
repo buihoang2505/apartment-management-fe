@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 space-y-5">
+  <div class="p-4 sm:p-6 space-y-4 sm:space-y-5">
     <!-- Page header -->
     <div class="flex flex-col sm:flex-row sm:items-center gap-4">
       <div class="flex-1">
@@ -80,6 +80,91 @@
           <option value="">Tất cả loại căn</option>
           <option v-for="t in typeOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
         </select>
+
+        <!-- Range filter popover -->
+        <div>
+          <button
+            ref="rangeBtnRef"
+            type="button"
+            @click="toggleRangePopover"
+            class="flex items-center gap-2 bg-white border text-[#414A4D] text-sm px-3 py-2.5 rounded-xl outline-none transition-colors cursor-pointer"
+            :class="rangeActive ? 'border-[#A8845A] text-[#A8845A]' : 'border-[#E8EFF5] hover:border-[#414A4D]'"
+          >
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <path d="M1 3h11M3 6.5h7M5 10h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Khoảng giá / DT
+            <span v-if="rangeCount > 0" class="bg-[#A8845A] text-white text-[10px] font-bold px-1.5 rounded-md">{{ rangeCount }}</span>
+          </button>
+
+          <Teleport to="body">
+            <Transition name="fade">
+              <div
+                v-if="rangePopoverOpen"
+                v-click-outside="closeRangePopover"
+                class="popover-range fixed z-[60] bg-white rounded-2xl shadow-2xl border border-[#E8EFF5] p-5"
+                :style="{ top: rangePos.top + 'px', left: rangePos.left + 'px', width: rangePos.width + 'px' }"
+              >
+              <div class="flex items-baseline justify-between mb-3">
+                <p class="text-[#0F2E4A] font-bold text-sm">Khoảng giá (VND)</p>
+                <p v-if="rangeDraft.minPrice || rangeDraft.maxPrice" class="text-[#A8845A] text-[11px] font-medium">
+                  {{ formatPriceShort(rangeDraft.minPrice) }} – {{ formatPriceShort(rangeDraft.maxPrice) }}
+                </p>
+              </div>
+              <div class="flex items-center gap-2 mb-4">
+                <input
+                  v-model.number="rangeDraft.minPrice"
+                  type="number" min="0" placeholder="Từ"
+                  class="w-0 flex-1 min-w-0 px-3 py-2 bg-[#F6F9FB] border border-[#DDE8EF] rounded-lg text-sm text-[#414A4D] placeholder-[#C5D5DF] outline-none focus:border-[#414A4D]"
+                />
+                <span class="text-[#A9B8A8] text-sm">—</span>
+                <input
+                  v-model.number="rangeDraft.maxPrice"
+                  type="number" min="0" placeholder="Đến"
+                  class="w-0 flex-1 min-w-0 px-3 py-2 bg-[#F6F9FB] border border-[#DDE8EF] rounded-lg text-sm text-[#414A4D] placeholder-[#C5D5DF] outline-none focus:border-[#414A4D]"
+                />
+              </div>
+
+              <div class="flex flex-wrap gap-1.5 mb-4">
+                <button
+                  v-for="p in pricePresets" :key="p.label"
+                  type="button"
+                  @click="applyPricePreset(p)"
+                  class="text-[11px] font-medium px-2 py-1 rounded-md bg-[#F0F4F8] text-[#414A4D] hover:bg-[#E0E8F0] transition-colors"
+                >{{ p.label }}</button>
+              </div>
+
+              <p class="text-[#0F2E4A] font-bold text-sm mb-3">Diện tích (m²)</p>
+              <div class="flex items-center gap-2 mb-5">
+                <input
+                  v-model.number="rangeDraft.minArea"
+                  type="number" min="0" step="0.1" placeholder="Từ"
+                  class="w-0 flex-1 min-w-0 px-3 py-2 bg-[#F6F9FB] border border-[#DDE8EF] rounded-lg text-sm text-[#414A4D] placeholder-[#C5D5DF] outline-none focus:border-[#414A4D]"
+                />
+                <span class="text-[#A9B8A8] text-sm">—</span>
+                <input
+                  v-model.number="rangeDraft.maxArea"
+                  type="number" min="0" step="0.1" placeholder="Đến"
+                  class="w-0 flex-1 min-w-0 px-3 py-2 bg-[#F6F9FB] border border-[#DDE8EF] rounded-lg text-sm text-[#414A4D] placeholder-[#C5D5DF] outline-none focus:border-[#414A4D]"
+                />
+              </div>
+
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  @click="resetRange"
+                  class="flex-1 py-2 rounded-lg border border-[#E8EFF5] text-[#414A4D] font-medium text-sm hover:bg-[#F0F4F8] transition-colors"
+                >Đặt lại</button>
+                <button
+                  type="button"
+                  @click="applyRange"
+                  class="flex-1 py-2 rounded-lg bg-[#0F2E4A] text-white font-semibold text-sm hover:bg-[#1a4060] transition-colors"
+                >Áp dụng</button>
+              </div>
+              </div>
+            </Transition>
+          </Teleport>
+        </div>
       </div>
     </div>
 
@@ -225,11 +310,11 @@
     </div>
 
     <!-- Pagination -->
-    <div v-if="totalPages > 1" class="flex items-center justify-between pt-2">
-      <p class="text-[#7A9AAD] text-sm">
+    <div v-if="totalPages > 1" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+      <p class="text-[#7A9AAD] text-sm text-center sm:text-left">
         {{ totalElements.toLocaleString('vi') }} căn hộ · Trang {{ currentPage + 1 }}/{{ totalPages }}
       </p>
-      <div class="flex items-center gap-1">
+      <div class="flex items-center justify-center gap-1">
         <button
           :disabled="currentPage === 0"
           @click="goToPage(currentPage - 1)"
@@ -239,11 +324,17 @@
           <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M6 1L1 6l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
 
+        <!-- Mobile: chỉ hiện trang hiện tại / tổng -->
+        <div class="sm:hidden bg-[#0F2E4A] text-white text-sm font-medium px-3 h-9 rounded-xl flex items-center">
+          {{ currentPage + 1 }} / {{ totalPages }}
+        </div>
+
+        <!-- Desktop: hiện đầy đủ số trang -->
         <button
           v-for="page in paginationPages"
           :key="page"
           @click="page !== '…' && goToPage(Number(page) - 1)"
-          class="w-9 h-9 rounded-xl text-sm font-medium flex items-center justify-center transition-colors"
+          class="hidden sm:flex w-9 h-9 rounded-xl text-sm font-medium items-center justify-center transition-colors"
           :class="page === currentPage + 1
             ? 'bg-[#0F2E4A] text-white'
             : page === '…'
@@ -306,7 +397,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import apartmentService from '@/services/apartmentService'
 import zoneService from '@/services/zoneService'
@@ -334,7 +425,112 @@ const filter = reactive({
   zoneId: '',
   status: '',
   type: '',
+  minPrice: null as number | null,
+  maxPrice: null as number | null,
+  minArea: null as number | null,
+  maxArea: null as number | null,
 })
+
+// Range popover (giá / diện tích)
+const rangePopoverOpen = ref(false)
+const rangeBtnRef = ref<HTMLButtonElement | null>(null)
+const rangePos = reactive({ top: 0, left: 0, width: 380 })
+const POPOVER_WIDTH = 380
+
+function updateRangePos() {
+  const el = rangeBtnRef.value
+  if (!el) return
+  const r = el.getBoundingClientRect()
+  const vw = document.documentElement.clientWidth
+  const MARGIN = 12
+  // Width: lấy nhỏ hơn giữa POPOVER_WIDTH và (vw - 2*MARGIN) để mobile vừa khít
+  const width = Math.min(POPOVER_WIDTH, vw - MARGIN * 2)
+  let left = r.right - width
+  if (left + width > vw - MARGIN) left = vw - width - MARGIN
+  if (left < MARGIN) left = MARGIN
+  rangePos.top = r.bottom + 8
+  rangePos.left = left
+  rangePos.width = width
+}
+function toggleRangePopover() {
+  rangePopoverOpen.value = !rangePopoverOpen.value
+  if (rangePopoverOpen.value) nextTick(updateRangePos)
+}
+watch(rangePopoverOpen, (open) => {
+  if (open) {
+    window.addEventListener('resize', updateRangePos)
+    window.addEventListener('scroll', updateRangePos, true)
+  } else {
+    window.removeEventListener('resize', updateRangePos)
+    window.removeEventListener('scroll', updateRangePos, true)
+  }
+})
+const rangeDraft = reactive({
+  minPrice: null as number | null,
+  maxPrice: null as number | null,
+  minArea: null as number | null,
+  maxArea: null as number | null,
+})
+const pricePresets = [
+  { label: '< 2 tỷ', minPrice: null, maxPrice: 2_000_000_000 },
+  { label: '2–3 tỷ', minPrice: 2_000_000_000, maxPrice: 3_000_000_000 },
+  { label: '3–5 tỷ', minPrice: 3_000_000_000, maxPrice: 5_000_000_000 },
+  { label: '> 5 tỷ', minPrice: 5_000_000_000, maxPrice: null },
+] as const
+
+const rangeCount = computed(() => {
+  let n = 0
+  if (filter.minPrice != null || filter.maxPrice != null) n++
+  if (filter.minArea != null || filter.maxArea != null) n++
+  return n
+})
+const rangeActive = computed(() => rangeCount.value > 0)
+
+function applyPricePreset(p: { minPrice: number | null; maxPrice: number | null }) {
+  rangeDraft.minPrice = p.minPrice
+  rangeDraft.maxPrice = p.maxPrice
+}
+function applyRange() {
+  filter.minPrice = rangeDraft.minPrice
+  filter.maxPrice = rangeDraft.maxPrice
+  filter.minArea = rangeDraft.minArea
+  filter.maxArea = rangeDraft.maxArea
+  rangePopoverOpen.value = false
+  onFilterChange()
+}
+function resetRange() {
+  rangeDraft.minPrice = null
+  rangeDraft.maxPrice = null
+  rangeDraft.minArea = null
+  rangeDraft.maxArea = null
+  applyRange()
+}
+function closeRangePopover() {
+  if (rangePopoverOpen.value) rangePopoverOpen.value = false
+}
+
+// Sync draft khi mở popover
+watch(rangePopoverOpen, (open) => {
+  if (open) {
+    rangeDraft.minPrice = filter.minPrice
+    rangeDraft.maxPrice = filter.maxPrice
+    rangeDraft.minArea = filter.minArea
+    rangeDraft.maxArea = filter.maxArea
+  }
+})
+
+// Click outside directive
+const vClickOutside = {
+  mounted(el: HTMLElement & { _co?: (e: MouseEvent) => void }, binding: { value: () => void }) {
+    el._co = (e: MouseEvent) => {
+      if (!el.contains(e.target as Node)) binding.value()
+    }
+    setTimeout(() => document.addEventListener('click', el._co!), 0)
+  },
+  unmounted(el: HTMLElement & { _co?: (e: MouseEvent) => void }) {
+    if (el._co) document.removeEventListener('click', el._co)
+  },
+}
 
 // Delete dialog
 const deleteDialog = reactive({
@@ -351,17 +547,14 @@ const statusOptions = [
   { value: 'KHOA', label: 'Khoá' },
 ]
 
-const typeOptions = [
-  { value: 'STUDIO', label: 'Studio' },
-  { value: 'ONE_BR', label: '1 phòng ngủ' },
-  { value: 'TWO_BR', label: '2 phòng ngủ' },
-  { value: 'TWO_BR_PLUS', label: '2 phòng ngủ +' },
-  { value: 'THREE_BR', label: '3 phòng ngủ' },
-  { value: 'THREE_BR_PLUS', label: '3 phòng ngủ +' },
-  { value: 'PENTHOUSE', label: 'Penthouse' },
-  { value: 'DUPLEX', label: 'Duplex' },
-  { value: 'OTHER', label: 'Khác' },
-]
+const typeOptions = ref<{ value: string; label: string }[]>([])
+
+async function fetchTypes() {
+  try {
+    const res = await apartmentService.getTypes()
+    typeOptions.value = res.data.data.map(t => ({ value: t.code, label: t.label }))
+  } catch { /* silent */ }
+}
 
 // Pagination display
 const paginationPages = computed<(number | string)[]>(() => {
@@ -396,6 +589,13 @@ function formatPrice(price: number) {
   if (!price) return '—'
   const ty = price / 1_000_000_000
   return ty >= 1 ? `${ty.toFixed(1).replace(/\.0$/, '')} tỷ` : `${(price / 1_000_000).toFixed(0)} tr`
+}
+
+function formatPriceShort(v: number | null | undefined) {
+  if (v == null) return '∞'
+  if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1).replace(/\.0$/, '')} tỷ`
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(0)} tr`
+  return v.toLocaleString('vi')
 }
 
 // Actions
@@ -466,6 +666,10 @@ async function fetchApartments() {
       zoneId: filter.zoneId || undefined,
       status: filter.status || undefined,
       type: filter.type || undefined,
+      minPrice: filter.minPrice ?? undefined,
+      maxPrice: filter.maxPrice ?? undefined,
+      minArea: filter.minArea ?? undefined,
+      maxArea: filter.maxArea ?? undefined,
       page: currentPage.value,
       size: PAGE_SIZE,
     })
@@ -500,10 +704,23 @@ watch(searchInput, () => {
 onMounted(() => {
   fetchApartments()
   fetchZones()
+  fetchTypes()
 })
 </script>
 
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>
+
+<style>
+/* Ẩn spinner number trong popover range để số dài không bị che */
+.popover-range input[type='number']::-webkit-outer-spin-button,
+.popover-range input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.popover-range input[type='number'] {
+  -moz-appearance: textfield;
+}
 </style>

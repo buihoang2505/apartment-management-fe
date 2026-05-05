@@ -1,16 +1,26 @@
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
     <!-- Top row: Greeting + Market card -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- Greeting -->
       <div class="lg:col-span-2 bg-[#D6E8F5] rounded-2xl px-6 py-6 flex items-start justify-between overflow-hidden relative">
         <div class="relative z-10">
-          <h2 class="text-[#0F2E4A] font-bold text-2xl leading-tight">
-            Chào buổi sáng,<br />Quản trị viên
+          <h2 class="text-[#0F2E4A] font-bold text-xl sm:text-2xl leading-tight">
+            {{ greetingText }},<br />{{ displayName }}
           </h2>
-          <p class="text-[#5A7A90] text-sm mt-2 max-w-xs">
-            Hệ thống ghi nhận <strong>{{ newTransactions }}</strong> giao dịch mới tại phân khu
-            <strong>{{ latestZone }}</strong>.
+          <p v-if="loading.stats" class="text-[#5A7A90] text-sm mt-2 max-w-xs">
+            <span class="inline-block h-3 w-48 bg-[#B8D2E5] rounded animate-pulse" />
+          </p>
+          <p v-else class="text-[#5A7A90] text-sm mt-2 max-w-xs">
+            <template v-if="(stats?.growth?.thisMonth ?? 0) > 0">
+              Tháng {{ currentMonth }} ghi nhận <strong>{{ stats?.growth?.thisMonth }}</strong> căn hộ mới<span v-if="featuredZone"> tại phân khu <strong>{{ featuredZone }}</strong></span>.
+            </template>
+            <template v-else-if="(stats?.total ?? 0) > 0">
+              Hệ thống đang quản lý <strong>{{ stats?.total }}</strong> căn hộ<span v-if="featuredZone"> qua phân khu <strong>{{ featuredZone }}</strong></span>.
+            </template>
+            <template v-else>
+              Chưa có dữ liệu căn hộ. Hãy thêm phân khu và căn hộ đầu tiên.
+            </template>
           </p>
         </div>
         <!-- Decorative apartment icon -->
@@ -35,8 +45,8 @@
         </div>
       </div>
 
-      <!-- Market growth -->
-      <div class="bg-[#0F2E4A] rounded-2xl px-6 py-6">
+      <!-- Inventory growth -->
+      <div class="bg-[#0F2E4A] rounded-2xl px-6 py-6 flex flex-col">
         <div class="flex items-center justify-between mb-3">
           <div class="bg-[#1a4060] p-2.5 rounded-xl">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -45,57 +55,125 @@
               <rect x="13" y="1" width="4" height="16" rx="1" fill="#A8845A"/>
             </svg>
           </div>
-          <span class="text-[#A9B8A8] text-xs font-semibold tracking-widest uppercase">Thị Trường</span>
+          <span class="text-[#A9B8A8] text-xs font-semibold tracking-widest uppercase">
+            Tồn kho tháng {{ currentMonth }}
+          </span>
         </div>
-        <div v-if="loading.stats" class="h-12 flex items-center">
+
+        <!-- Loading -->
+        <div v-if="loading.stats" class="h-16 flex items-center">
           <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
         </div>
+
+        <!-- Empty state with CTA -->
+        <div v-else-if="(stats?.growth?.thisMonth ?? 0) === 0" class="flex-1 flex flex-col">
+          <p class="text-white/50 text-sm leading-snug">Chưa có căn hộ mới trong tháng này</p>
+          <button
+            @click="$router.push('/apartments/new')"
+            class="mt-4 self-start flex items-center gap-1.5 bg-[#A8845A] hover:bg-[#b8966c] text-white text-xs font-semibold px-3 py-2 rounded-xl transition-colors"
+          >
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <path d="M5.5 1v9M1 5.5h9" stroke="white" stroke-width="1.7" stroke-linecap="round"/>
+            </svg>
+            Thêm căn hộ
+          </button>
+        </div>
+
+        <!-- Has data -->
         <div v-else>
-          <p v-if="marketPrimary" class="font-bold leading-none"
-            :class="[marketTextClass, marketIsCount ? 'text-4xl' : 'text-4xl']">
-            {{ marketPrimary }}<span v-if="marketIsCount" class="text-xl ml-1 font-medium">căn</span>
-          </p>
-          <p v-else class="text-white/40 text-lg mt-2 font-bold">Chưa có dữ liệu</p>
-          <p class="text-[#7DA5BE] text-sm mt-1">{{ marketSubtitle }}</p>
+          <div class="flex items-baseline gap-2.5">
+            <span class="text-white font-bold text-4xl leading-none">{{ stats?.growth?.thisMonth }}</span>
+            <span class="text-white/60 text-sm font-medium">căn mới</span>
+            <span
+              v-if="growthBadge"
+              class="ml-auto text-[11px] font-bold px-2 py-1 rounded-md flex items-center gap-1"
+              :class="growthBadge.class"
+            >
+              <svg v-if="growthBadge.dir === 'up'" width="9" height="9" viewBox="0 0 9 9" fill="none">
+                <path d="M4.5 1v7M1.5 4l3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg v-else-if="growthBadge.dir === 'down'" width="9" height="9" viewBox="0 0 9 9" fill="none">
+                <path d="M4.5 8V1M1.5 5l3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              {{ growthBadge.text }}
+            </span>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+            <span class="text-[#7DA5BE] text-xs">Tháng trước</span>
+            <span class="text-white/80 text-xs font-semibold">
+              {{ (stats?.growth?.lastMonth ?? 0) }} căn
+            </span>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Second row: Tổng sản phẩm -->
-    <div class="bg-white rounded-2xl px-6 py-5 flex items-center justify-between">
-      <div>
-        <p class="text-[#7A9AAD] text-xs font-semibold tracking-widest uppercase mb-1">Tổng sản phẩm</p>
-        <div class="flex items-center gap-2.5">
-          <div v-if="loading.stats" class="h-10 w-24 bg-[#F0F4F8] rounded animate-pulse" />
-          <template v-else>
-            <span class="text-[#0F2E4A] font-bold text-4xl">{{ stats?.total?.toLocaleString('vi') ?? '—' }}</span>
-            <span
-              v-if="growthPill !== null"
-              class="text-xs font-semibold px-2 py-0.5 rounded-full"
-              :class="growthPill === 'N/A' ? 'bg-gray-100 text-gray-500'
-                    : Number(growthPill) >= 0 ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-red-100 text-red-600'"
-            >
-              <template v-if="growthPill === 'N/A'">—</template>
-              <template v-else>{{ Number(growthPill) >= 0 ? '+' : '' }}{{ Number(growthPill).toFixed(0) }}%</template>
-            </span>
-          </template>
+    <div class="bg-white rounded-2xl px-5 sm:px-6 py-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="flex items-start justify-between lg:block">
+        <div>
+          <p class="text-[#7A9AAD] text-xs font-semibold tracking-widest uppercase mb-1">Tổng sản phẩm</p>
+          <div class="flex items-center gap-2.5">
+            <div v-if="loading.stats" class="h-10 w-24 bg-[#F0F4F8] rounded animate-pulse" />
+            <template v-else>
+              <span class="text-[#0F2E4A] font-bold text-3xl sm:text-4xl">{{ stats?.total?.toLocaleString('vi') ?? '—' }}</span>
+              <span
+                v-if="growthPill !== null"
+                class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                :class="growthPill === 'N/A' ? 'bg-gray-100 text-gray-500'
+                      : Number(growthPill) >= 0 ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-red-100 text-red-600'"
+              >
+                <template v-if="growthPill === 'N/A'">—</template>
+                <template v-else>{{ Number(growthPill) >= 0 ? '+' : '' }}{{ Number(growthPill).toFixed(0) }}%</template>
+              </span>
+            </template>
+          </div>
         </div>
+        <!-- Nút "+ thêm" hiện cạnh số trên mobile/tablet, ẩn trên desktop -->
+        <button @click="$router.push('/apartments')"
+          class="lg:hidden w-9 h-9 rounded-full bg-[#0F2E4A] flex items-center justify-center flex-shrink-0 hover:bg-[#1a4060] transition-colors">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 1v10M1 6h10" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
       <div class="flex items-center gap-3">
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <span v-for="(val, key) in (stats?.byStatus ?? {})" :key="key"
-            class="text-xs px-2.5 py-1 rounded-lg font-medium"
+            class="text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-lg font-medium"
             :class="statusClass(key)">
             {{ statusLabel(key) }}: {{ val }}
           </span>
         </div>
         <button @click="$router.push('/apartments')"
-          class="w-9 h-9 rounded-full bg-[#0F2E4A] flex items-center justify-center flex-shrink-0 hover:bg-[#1a4060] transition-colors">
+          class="hidden lg:flex w-9 h-9 rounded-full bg-[#0F2E4A] items-center justify-center flex-shrink-0 hover:bg-[#1a4060] transition-colors">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M6 1v10M1 6h10" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
         </button>
+      </div>
+    </div>
+
+    <!-- Phân bố theo loại căn -->
+    <div v-if="!loading.stats && typeBreakdown.length" class="bg-white rounded-2xl px-6 py-5">
+      <div class="flex items-center justify-between mb-4">
+        <p class="text-[#7A9AAD] text-xs font-semibold tracking-widest uppercase">Phân bố theo loại căn</p>
+        <span class="text-[#A9B8A8] text-xs">Top {{ typeBreakdown.length }}</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
+        <div v-for="t in typeBreakdown" :key="t.code">
+          <div class="flex items-baseline justify-between mb-1.5">
+            <span class="text-[#414A4D] text-sm font-medium truncate">{{ t.label }}</span>
+            <span class="text-[#0F2E4A] text-sm font-bold flex-shrink-0">
+              {{ t.count }} <span class="text-[#A9B8A8] text-xs font-medium">· {{ t.pct }}%</span>
+            </span>
+          </div>
+          <div class="h-1.5 bg-[#F0F4F8] rounded-full overflow-hidden">
+            <div class="h-full bg-[#A8845A] rounded-full transition-all duration-500" :style="{ width: t.pct + '%' }" />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -276,61 +354,83 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import dashboardService from '@/services/dashboardService'
 import portfolioService from '@/services/portfolioService'
+import apartmentService from '@/services/apartmentService'
 import { useToastStore } from '@/stores/toastStore'
+import { useAuthStore } from '@/stores/authStore'
 import type { DashboardStatsResponse } from '@/types/dashboard'
 import type { Portfolio } from '@/types/portfolio'
 
 const router = useRouter()
 const toastStore = useToastStore()
-const loading = ref({ stats: true, portfolios: true })
+const authStore = useAuthStore()
+const loading = ref({ stats: true, portfolios: true, types: true })
 const stats = ref<DashboardStatsResponse | null>(null)
 const portfolios = ref<Portfolio[]>([])
 const expandedPortfolio = ref<string | null>(null)
+const typeLabels = ref<Record<string, string>>({})
 
-const newTransactions = ref(14)
-const latestZone = ref('Lumi Hà Nội')
 const currentMonth = computed(() => new Date().getMonth() + 1)
 
-const growthPill = computed(() => {
-  const growth = stats.value?.growth
-  if (!growth) return null
-  // Nếu backend trả về percentage=null, nghĩa là không có dữ liệu tháng trước để so sánh
-  if (growth.percentage === null || growth.percentage === undefined) {
-    // Chỉ hiện badge N/A nếu tháng này có dữ liệu (để phân biệt với "chưa có gì")
-    return growth.thisMonth > 0 ? 'N/A' : null
+// Greeting động theo thời gian + tên user
+const greetingText = computed(() => {
+  const h = new Date().getHours()
+  if (h < 11) return 'Chào buổi sáng'
+  if (h < 13) return 'Chào buổi trưa'
+  if (h < 18) return 'Chào buổi chiều'
+  return 'Chào buổi tối'
+})
+const displayName = computed(() => {
+  const u = authStore.user
+  if (!u) return 'bạn'
+  return u.username || (u.role === 'ADMIN' ? 'Quản trị viên' : 'bạn')
+})
+
+// Phân khu nổi bật — lấy zone đầu tiên có sẵn từ portfolios
+const featuredZone = computed(() => {
+  for (const p of portfolios.value) {
+    if (p.zones?.length) return p.zones[0].name
   }
-  return growth.percentage
+  return ''
 })
 
-// Card Thị Trường — hiển thị % nếu có, fallback sang số căn tháng này
-const marketPrimary = computed(() => {
-  const growth = stats.value?.growth
-  if (!growth) return null
-  if (growth.percentage != null) return (growth.percentage >= 0 ? '+' : '') + growth.percentage.toFixed(1) + '%'
-  if (growth.thisMonth > 0) return String(growth.thisMonth)
-  return null
+// Phân bố theo loại căn — sort desc, top 6
+const typeBreakdown = computed(() => {
+  const by = stats.value?.byType ?? {}
+  const total = Object.values(by).reduce((s, v) => s + v, 0)
+  if (!total) return [] as { code: string; label: string; count: number; pct: number }[]
+  return Object.entries(by)
+    .map(([code, count]) => ({
+      code,
+      label: typeLabels.value[code] ?? code,
+      count,
+      pct: Math.round((count / total) * 100),
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6)
 })
 
-const marketIsCount = computed(() => {
-  const growth = stats.value?.growth
-  return growth?.percentage == null && (growth?.thisMonth ?? 0) > 0
+// Pill cho card "Tổng sản phẩm" (giữ tương thích)
+const growthPill = computed(() => {
+  const g = stats.value?.growth
+  if (!g) return null
+  if (g.percentage == null) return g.thisMonth > 0 ? 'N/A' : null
+  return g.percentage
 })
 
-const marketSubtitle = computed(() => {
-  const growth = stats.value?.growth
-  const m = currentMonth.value
-  if (!growth) return `Tháng ${m}`
-  // Ưu tiên dùng label từ backend (đã xử lý edge case)
-  if (growth.label) return growth.label
-  if (growth.percentage != null) return `Tăng trưởng tồn kho tháng ${m}`
-  if (growth.thisMonth > 0) return `Căn hộ mới tháng ${m}`
-  return `Tháng ${m}`
-})
-
-const marketTextClass = computed(() => {
-  const p = stats.value?.growth?.percentage
-  if (p == null) return 'text-white'
-  return p >= 0 ? 'text-emerald-400' : 'text-red-400'
+// Badge tăng trưởng cho card Tồn kho — gồm hướng (up/down/flat/new), text, class màu
+const growthBadge = computed(() => {
+  const g = stats.value?.growth
+  if (!g) return null
+  // Tháng trước = 0, tháng này > 0 → đánh dấu "Mới" thay vì N/A
+  if (g.percentage == null) {
+    return g.thisMonth > 0
+      ? { dir: 'new' as const, text: 'Mới', class: 'bg-[#A8845A]/20 text-[#E8C9A0]' }
+      : null
+  }
+  const p = g.percentage
+  if (p > 0) return { dir: 'up' as const, text: `+${p.toFixed(0)}%`, class: 'bg-emerald-500/15 text-emerald-300' }
+  if (p < 0) return { dir: 'down' as const, text: `${p.toFixed(0)}%`, class: 'bg-rose-500/15 text-rose-300' }
+  return { dir: 'flat' as const, text: '0%', class: 'bg-white/10 text-white/70' }
 })
 
 function togglePortfolio(id: string) {
@@ -370,6 +470,14 @@ async function fetchStats() {
   }
 }
 
+async function fetchTypes() {
+  try {
+    const res = await apartmentService.getTypes()
+    typeLabels.value = Object.fromEntries((res.data.data ?? []).map(t => [t.code, t.label]))
+  } catch { /* silent — fallback dùng code */ }
+  finally { loading.value.types = false }
+}
+
 async function fetchPortfolios() {
   try {
     const res = await portfolioService.getAll()
@@ -385,5 +493,6 @@ async function fetchPortfolios() {
 onMounted(() => {
   fetchStats()
   fetchPortfolios()
+  fetchTypes()
 })
 </script>

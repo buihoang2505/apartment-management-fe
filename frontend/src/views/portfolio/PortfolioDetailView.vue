@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
 
     <!-- Back -->
     <button @click="router.push('/portfolios')" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#A8845A] transition-colors">

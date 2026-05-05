@@ -1,8 +1,8 @@
 <template>
-  <div class="p-6">
+  <div class="p-4 sm:p-6">
     <!-- Header -->
-    <div class="flex items-start justify-between mb-6">
-      <div>
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+      <div class="min-w-0">
         <div class="flex items-center gap-2 mb-1">
           <button
             @click="$router.push('/apartments')"
@@ -14,22 +14,37 @@
           </button>
           <span class="text-[#A9B8A8] text-sm">Căn hộ</span>
         </div>
-        <h2 class="text-[#0F2E4A] font-bold text-2xl">
+        <h2 class="text-[#0F2E4A] font-bold text-xl sm:text-2xl truncate">
           {{ isNew ? 'Thêm căn hộ mới' : 'Thông tin căn hộ' }}
         </h2>
-        <p v-if="!isNew && original" class="text-[#7A9AAD] text-sm mt-0.5">
+        <p v-if="!isNew && original" class="text-[#7A9AAD] text-sm mt-0.5 truncate">
           Unit Reference: <strong class="text-[#414A4D]">{{ original.displayCode || original.unitCode }}</strong>
         </p>
       </div>
 
-      <!-- Status badge -->
-      <span
-        v-if="!isNew && form.status"
-        class="mt-1 text-xs font-bold px-3 py-1.5 rounded-full"
-        :class="statusBadgeClass(form.status)"
-      >
-        {{ statusLabel(form.status) }}
-      </span>
+      <div class="flex items-center gap-3 flex-shrink-0">
+        <!-- Move button -->
+        <button
+          v-if="!isNew && original"
+          type="button"
+          @click="openMoveDialog"
+          class="flex items-center gap-2 bg-white border border-[#E8EFF5] hover:border-[#A8845A] hover:text-[#A8845A] text-[#414A4D] text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 7h10M9 4l3 3-3 3M5 1L2 4l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Chuyển toà
+        </button>
+
+        <!-- Status badge -->
+        <span
+          v-if="!isNew && form.status"
+          class="text-xs font-bold px-3 py-1.5 rounded-full"
+          :class="statusBadgeClass(form.status)"
+        >
+          {{ statusLabel(form.status) }}
+        </span>
+      </div>
     </div>
 
     <!-- Page loading -->
@@ -383,15 +398,79 @@
               Xem toàn bộ gallery
             </button>
           </div>
+
+          <!-- Status History -->
+          <div v-if="!isNew" class="bg-white rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-5">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 bg-[#7A9AAD] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <circle cx="7" cy="7" r="5.5" stroke="white" stroke-width="1.3"/>
+                    <path d="M7 4v3l2 1.5" stroke="white" stroke-width="1.3" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <h3 class="text-[#0F2E4A] font-bold text-base">Lịch sử trạng thái</h3>
+              </div>
+              <span v-if="!historyLoading && statusHistory.length" class="text-[#A9B8A8] text-xs">{{ statusHistory.length }} mục</span>
+            </div>
+
+            <!-- Loading -->
+            <div v-if="historyLoading" class="space-y-3">
+              <div v-for="i in 3" :key="i" class="flex gap-3">
+                <div class="w-2 h-2 mt-1.5 bg-[#E8EFF5] rounded-full animate-pulse" />
+                <div class="flex-1 space-y-1.5">
+                  <div class="h-3 bg-[#E8EFF5] rounded w-2/3 animate-pulse" />
+                  <div class="h-2 bg-[#E8EFF5] rounded w-1/3 animate-pulse" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Error -->
+            <div v-else-if="historyError" class="flex items-center justify-between bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">
+              <span class="text-red-500 text-xs">Không thể tải lịch sử</span>
+              <button type="button" class="text-[#A8845A] text-xs font-medium hover:underline" @click="fetchStatusHistory">Thử lại</button>
+            </div>
+
+            <!-- Empty -->
+            <div v-else-if="!statusHistory.length" class="flex flex-col items-center justify-center py-6 border-2 border-dashed border-[#E8EFF5] rounded-xl">
+              <p class="text-[#A9B8A8] text-xs">Chưa có thay đổi trạng thái</p>
+            </div>
+
+            <!-- Timeline -->
+            <div v-else class="relative pl-5">
+              <div class="absolute left-1.5 top-1.5 bottom-1.5 w-px bg-[#E8EFF5]" />
+              <div v-for="(h, idx) in statusHistory" :key="h.id" :class="idx > 0 ? 'mt-4' : ''" class="relative">
+                <div
+                  class="absolute -left-[18px] top-1 w-3 h-3 rounded-full ring-2 ring-white"
+                  :class="statusDotClass(h.newStatus)"
+                />
+                <div class="flex flex-wrap items-center gap-1.5 text-xs">
+                  <span v-if="h.oldStatus" class="px-2 py-0.5 rounded-md font-semibold" :class="statusBadgeClass(h.oldStatus)">
+                    {{ statusLabel(h.oldStatus) }}
+                  </span>
+                  <svg v-if="h.oldStatus" width="10" height="10" viewBox="0 0 10 10" fill="none" class="text-[#A9B8A8]">
+                    <path d="M1 5h8M6 2l3 3-3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span class="px-2 py-0.5 rounded-md font-semibold" :class="statusBadgeClass(h.newStatus)">
+                    {{ statusLabel(h.newStatus) }}
+                  </span>
+                </div>
+                <p v-if="h.note" class="text-[#414A4D] text-xs mt-1.5">{{ h.note }}</p>
+                <p class="text-[#A9B8A8] text-[11px] mt-1">
+                  {{ formatDateTime(h.createdAt) }}<span v-if="h.changedBy"> · {{ h.changedBy }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Action buttons -->
-      <div class="flex items-center justify-between mt-6 pt-6 border-t border-[#E8EFF5]">
+      <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 pt-6 border-t border-[#E8EFF5]">
         <button
           type="button"
           @click="handleDiscard"
-          class="flex items-center gap-2 text-[#414A4D] font-semibold text-sm px-5 py-3 rounded-xl hover:bg-[#F0F4F8] transition-colors"
+          class="flex items-center justify-center gap-2 text-[#414A4D] font-semibold text-sm px-5 py-3 rounded-xl hover:bg-[#F0F4F8] transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -399,12 +478,12 @@
           Discard Changes
         </button>
 
-        <div class="flex items-center gap-3">
-          <span v-if="submitError" class="text-red-500 text-sm">{{ submitError }}</span>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <span v-if="submitError" class="text-red-500 text-sm text-center sm:text-left">{{ submitError }}</span>
           <button
             type="submit"
             :disabled="submitting"
-            class="flex items-center gap-2 bg-[#0F2E4A] hover:bg-[#1a4060] text-white font-semibold text-sm px-6 py-3 rounded-xl transition-colors disabled:opacity-60"
+            class="flex items-center justify-center gap-2 bg-[#0F2E4A] hover:bg-[#1a4060] text-white font-semibold text-sm px-6 py-3 rounded-xl transition-colors disabled:opacity-60"
           >
             <svg v-if="submitting" class="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none">
               <circle cx="7" cy="7" r="5" stroke="white" stroke-width="2" stroke-dasharray="16 14"/>
@@ -544,6 +623,95 @@
     </Transition>
   </Teleport>
 
+  <!-- Move dialog -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div
+        v-if="moveDialog.show"
+        class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 overflow-y-auto"
+        @click.self="closeMoveDialog"
+      >
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 my-auto max-h-[90vh] overflow-y-auto">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h3 class="text-[#0F2E4A] font-bold text-lg">Chuyển toà nhà</h3>
+              <p class="text-[#7A9AAD] text-sm mt-0.5">Di chuyển căn hộ sang toà nhà khác</p>
+            </div>
+            <button @click="closeMoveDialog" class="text-[#A9B8A8] hover:text-[#414A4D] transition-colors">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Current location -->
+          <div class="bg-[#F6F9FB] rounded-xl px-4 py-3 mb-4">
+            <p class="text-[#A9B8A8] text-[10px] font-semibold tracking-widest uppercase mb-1">VỊ TRÍ HIỆN TẠI</p>
+            <p class="text-[#414A4D] text-sm font-medium">
+              {{ original?.zoneName || '—' }}<span v-if="original?.buildingName"> · {{ original.buildingName }}</span>
+            </p>
+          </div>
+
+          <!-- New zone -->
+          <label class="block text-[#7A9AAD] text-[10px] font-semibold tracking-widest uppercase mb-1.5">PHÂN KHU MỚI</label>
+          <select v-model="moveDialog.zoneId" class="form-input cursor-pointer mb-3" @change="onMoveZoneChange">
+            <option value="">Chọn phân khu</option>
+            <option v-for="z in zones" :key="z.id" :value="z.id">{{ z.name }}</option>
+          </select>
+
+          <!-- New building -->
+          <label class="block text-[#7A9AAD] text-[10px] font-semibold tracking-widest uppercase mb-1.5">TOÀ NHÀ MỚI <span class="text-red-400">*</span></label>
+          <select
+            v-model="moveDialog.buildingId"
+            class="form-input cursor-pointer mb-1"
+            :class="moveDialog.error ? 'border-red-400' : ''"
+            :disabled="!moveDialog.zoneId || moveDialog.loadingBuildings"
+          >
+            <option value="">{{ moveDialog.zoneId ? 'Chọn toà nhà' : 'Chọn phân khu trước' }}</option>
+            <option
+              v-for="b in moveDialog.buildings"
+              :key="b.id"
+              :value="b.id"
+              :disabled="b.id === original?.buildingId"
+            >
+              {{ b.name }} ({{ b.code }}){{ b.id === original?.buildingId ? ' — hiện tại' : '' }}
+            </option>
+          </select>
+          <p v-if="moveDialog.error" class="text-red-500 text-xs mb-3">{{ moveDialog.error }}</p>
+          <div v-else class="mb-3" />
+
+          <!-- Note -->
+          <label class="block text-[#7A9AAD] text-[10px] font-semibold tracking-widest uppercase mb-1.5">GHI CHÚ</label>
+          <textarea
+            v-model="moveDialog.note"
+            rows="2"
+            placeholder="Lý do chuyển toà..."
+            class="form-input resize-none mb-5"
+          />
+
+          <div class="flex gap-3">
+            <button
+              type="button"
+              @click="closeMoveDialog"
+              class="flex-1 py-2.5 rounded-xl border border-[#E8EFF5] text-[#414A4D] font-medium text-sm hover:bg-[#F0F4F8] transition-colors"
+            >Hủy</button>
+            <button
+              type="button"
+              :disabled="moveDialog.submitting || !moveDialog.buildingId"
+              @click="executeMove"
+              class="flex-1 py-2.5 rounded-xl bg-[#0F2E4A] text-white font-semibold text-sm hover:bg-[#1a4060] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <svg v-if="moveDialog.submitting" class="animate-spin" width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <circle cx="6.5" cy="6.5" r="5" stroke="white" stroke-width="1.8" stroke-dasharray="14 10"/>
+              </svg>
+              {{ moveDialog.submitting ? 'Đang chuyển...' : 'Xác nhận chuyển' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
   <!-- Discard confirm dialog -->
   <Teleport to="body">
     <Transition name="fade">
@@ -592,7 +760,7 @@ import { ref, reactive, computed, watch, onMounted, nextTick, defineComponent, h
 import { useRoute, useRouter } from 'vue-router'
 import apartmentService from '@/services/apartmentService'
 import zoneService from '@/services/zoneService'
-import type { ApartmentResponse } from '@/types/apartment'
+import type { ApartmentResponse, ApartmentStatusHistoryResponse } from '@/types/apartment'
 import type { Zone, BuildingResponse } from '@/types/zone'
 
 // Inline FormField component to avoid extra file
@@ -661,6 +829,100 @@ const submitting = ref(false)
 const submitError = ref('')
 const discardDialog = ref(false)
 const toast = reactive({ show: false, type: 'success', message: '' })
+
+// Move dialog
+const moveDialog = reactive({
+  show: false,
+  zoneId: '',
+  buildingId: '',
+  note: '',
+  buildings: [] as BuildingResponse[],
+  loadingBuildings: false,
+  submitting: false,
+  error: '',
+})
+
+function openMoveDialog() {
+  if (!original.value) return
+  moveDialog.zoneId = original.value.zoneId ?? ''
+  moveDialog.buildingId = ''
+  moveDialog.note = ''
+  moveDialog.error = ''
+  moveDialog.buildings = []
+  moveDialog.show = true
+  if (moveDialog.zoneId) loadMoveBuildings(moveDialog.zoneId)
+}
+function closeMoveDialog() {
+  if (moveDialog.submitting) return
+  moveDialog.show = false
+}
+async function onMoveZoneChange() {
+  moveDialog.buildingId = ''
+  moveDialog.error = ''
+  moveDialog.buildings = []
+  if (moveDialog.zoneId) await loadMoveBuildings(moveDialog.zoneId)
+}
+async function loadMoveBuildings(zoneId: string) {
+  moveDialog.loadingBuildings = true
+  try {
+    const res = await zoneService.getBuildingsByZone(zoneId)
+    moveDialog.buildings = res.data.data ?? []
+  } catch {
+    moveDialog.buildings = []
+  } finally {
+    moveDialog.loadingBuildings = false
+  }
+}
+async function executeMove() {
+  if (!apartmentId.value || !moveDialog.buildingId) return
+  if (moveDialog.buildingId === original.value?.buildingId) {
+    moveDialog.error = 'Vui lòng chọn toà nhà khác với hiện tại'
+    return
+  }
+  moveDialog.submitting = true
+  moveDialog.error = ''
+  try {
+    await apartmentService.move(apartmentId.value, {
+      newBuildingId: moveDialog.buildingId,
+      note: moveDialog.note.trim() || undefined,
+    })
+    showToast('success', 'Chuyển toà nhà thành công!')
+    moveDialog.show = false
+    // Refresh detail + history + form
+    const res = await apartmentService.getById(apartmentId.value)
+    original.value = res.data.data
+    await populateForm(res.data.data)
+    fetchStatusHistory()
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } }
+    moveDialog.error = e.response?.data?.message ?? 'Không thể chuyển toà. Vui lòng thử lại.'
+  } finally {
+    moveDialog.submitting = false
+  }
+}
+
+// Status history
+const statusHistory = ref<ApartmentStatusHistoryResponse[]>([])
+const historyLoading = ref(false)
+const historyError = ref(false)
+
+async function fetchStatusHistory() {
+  if (!apartmentId.value) return
+  historyLoading.value = true
+  historyError.value = false
+  try {
+    const res = await apartmentService.getStatusHistory(apartmentId.value)
+    const list = res.data.data ?? []
+    statusHistory.value = [...list].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  } catch {
+    historyError.value = true
+    statusHistory.value = []
+  } finally {
+    historyLoading.value = false
+  }
+}
 
 // Image upload
 const imageFileInput = ref<HTMLInputElement | null>(null)
@@ -769,6 +1031,22 @@ function statusBadgeClass(s: string) {
     KHOA: 'bg-red-100 text-red-600',
   }
   return map[s] ?? 'bg-[#F0F4F8] text-[#414A4D]'
+}
+function statusDotClass(s: string) {
+  const map: Record<string, string> = {
+    DANG_BAN: 'bg-emerald-500',
+    DA_COC: 'bg-amber-500',
+    DA_BAN: 'bg-blue-500',
+    GIU_CHO: 'bg-purple-500',
+    KHOA: 'bg-red-500',
+  }
+  return map[s] ?? 'bg-[#A9B8A8]'
+}
+function formatDateTime(iso: string) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 function formatPrice(v: number | null) {
   if (!v) return ''
@@ -931,6 +1209,7 @@ async function handleSubmit() {
       showToast('success', 'Cập nhật thành công!')
       const res = await apartmentService.getById(apartmentId.value!)
       original.value = res.data.data
+      fetchStatusHistory()
     }
   } catch (err: unknown) {
     const e = err as { response?: { data?: { message?: string } } }
@@ -978,6 +1257,7 @@ onMounted(async () => {
       const res = await apartmentService.getById(apartmentId.value)
       original.value = res.data.data
       await populateForm(res.data.data)
+      fetchStatusHistory()
     } catch {
       pageError.value = 'Không thể tải thông tin căn hộ.'
     } finally {

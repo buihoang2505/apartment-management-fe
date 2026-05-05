@@ -182,12 +182,21 @@ onUnmounted(() => {
   top: calc(100% + 8px);
   right: 0;
   width: 360px;
+  max-width: calc(100vw - 24px);
   background: white;
   border-radius: 14px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.13), 0 2px 8px rgba(0, 0, 0, 0.06);
   border: 1px solid #f0f0f0;
   z-index: 1000;
   overflow: hidden;
+}
+
+@media (max-width: 480px) {
+  .notif-dropdown {
+    width: calc(100vw - 24px);
+    /* Bù về phía trái để dropdown không lệch ra ngoài viewport bên trái */
+    right: -8px;
+  }
 }
 
 .notif-header {

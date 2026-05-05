@@ -27,7 +27,7 @@
     <div class="flex-1 flex flex-col min-w-0 md:ml-[240px]">
 
       <!-- Top header -->
-      <header class="bg-white border-b border-[#E5E9EE] px-6 h-[60px] flex items-center gap-4 flex-shrink-0">
+      <header class="bg-white border-b border-[#E5E9EE] px-3 sm:px-6 h-[60px] flex items-center gap-2 sm:gap-4 flex-shrink-0">
 
         <!-- Mobile hamburger -->
         <button
@@ -44,11 +44,11 @@
         <!-- Breadcrumb + Title -->
         <div class="flex-1 min-w-0">
           <!-- Breadcrumb -->
-          <div v-if="breadcrumbs.length > 1" class="flex items-center gap-1 mb-0.5">
+          <div v-if="breadcrumbs.length > 1" class="flex items-center gap-1 mb-0.5 whitespace-nowrap overflow-hidden">
             <span
               v-for="(crumb, i) in breadcrumbs"
               :key="i"
-              class="flex items-center gap-1"
+              class="flex items-center gap-1 flex-shrink-0"
             >
               <span
                 v-if="i < breadcrumbs.length - 1"

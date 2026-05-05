@@ -1,13 +1,13 @@
 <template>
-  <div class="p-6 space-y-5">
+  <div class="p-4 sm:p-6 space-y-4 sm:space-y-5">
 
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-[24px] font-semibold text-[#1A1A2E] leading-tight">Lịch sử Audit</h1>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="min-w-0">
+        <h1 class="text-xl sm:text-[24px] font-semibold text-[#1A1A2E] leading-tight">Lịch sử Audit</h1>
         <p class="text-sm text-[#6B7280] mt-1">Toàn bộ thao tác trong hệ thống</p>
       </div>
-      <div class="flex items-center gap-2 bg-white border border-[#E5E9EE] rounded-xl px-4 py-2 shadow-card">
+      <div class="self-start sm:self-auto flex items-center gap-2 bg-white border border-[#E5E9EE] rounded-xl px-4 py-2 shadow-card whitespace-nowrap flex-shrink-0">
         <svg class="w-4 h-4 text-[#A9B8A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>

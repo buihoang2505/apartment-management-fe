@@ -1,5 +1,5 @@
 import http from './http'
-import type { ApartmentResponse } from '@/types/apartment'
+import type { ApartmentResponse, ApartmentStatusHistoryResponse } from '@/types/apartment'
 import type { CommonResponse, PageResponse, ImageResponse } from '@/types/common'
 
 export interface ApartmentFilter {
@@ -10,6 +10,8 @@ export interface ApartmentFilter {
   search?: string
   minPrice?: number
   maxPrice?: number
+  minArea?: number
+  maxArea?: number
   page?: number
   size?: number
 }
@@ -24,6 +26,8 @@ const apartmentService = {
     if (filter.search) params.search = filter.search
     if (filter.minPrice != null) params.minPrice = filter.minPrice
     if (filter.maxPrice != null) params.maxPrice = filter.maxPrice
+    if (filter.minArea != null) params.minArea = filter.minArea
+    if (filter.maxArea != null) params.maxArea = filter.maxArea
     params.page = filter.page ?? 0
     params.size = filter.size ?? 20
     return http.get('/apartments', { params })
@@ -58,6 +62,14 @@ const apartmentService = {
 
   deleteImage(id: string, imageId: string): Promise<{ data: CommonResponse<void> }> {
     return http.delete(`/apartments/${id}/images/${imageId}`)
+  },
+
+  getStatusHistory(id: string): Promise<{ data: CommonResponse<ApartmentStatusHistoryResponse[]> }> {
+    return http.get(`/apartments/${id}/status-history`)
+  },
+
+  move(id: string, payload: { newBuildingId: string; note?: string }): Promise<{ data: CommonResponse<ApartmentResponse> }> {
+    return http.patch(`/apartments/${id}/move`, payload)
   },
 }
 
