@@ -113,13 +113,34 @@ function toggleDropdown() {
 }
 
 async function markAllRead() {
+  const snapshot = notifications.value.map(n => ({ id: n.id, isRead: n.isRead }))
   notifications.value.forEach(n => { n.isRead = true })
-  try { await notificationService.markAllRead() } catch { /* ignore */ }
+  window.dispatchEvent(new CustomEvent('notif:mark-all-read'))
+  try {
+    await notificationService.markAllRead()
+  } catch {
+    const map = new Map(snapshot.map(s => [s.id, s.isRead]))
+    notifications.value.forEach(n => { n.isRead = map.get(n.id) ?? n.isRead })
+  }
+}
+
+function onExternalMarkAllRead() {
+  notifications.value.forEach(n => { n.isRead = true })
+}
+function onExternalMarkRead(e: Event) {
+  const id = (e as CustomEvent<{ id: string }>).detail?.id
+  if (!id) return
+  const n = notifications.value.find(x => x.id === id)
+  if (n) n.isRead = true
+}
+function onExternalRefresh() {
+  loadNotifications()
 }
 
 async function onClickNotif(notif: NotificationResponse) {
   if (!notif.isRead) {
     notif.isRead = true
+    window.dispatchEvent(new CustomEvent('notif:mark-read', { detail: { id: notif.id } }))
     try { await notificationService.markAsRead(notif.id) } catch { /* ignore */ }
   }
   isOpen.value = false
@@ -151,11 +172,17 @@ onMounted(() => {
   loadNotifications()
   notificationService.connect(onWsMessage)
   document.addEventListener('mousedown', onDocumentClick)
+  window.addEventListener('notif:mark-all-read', onExternalMarkAllRead)
+  window.addEventListener('notif:mark-read', onExternalMarkRead)
+  window.addEventListener('notif:refresh', onExternalRefresh)
 })
 
 onUnmounted(() => {
   notificationService.disconnect()
   document.removeEventListener('mousedown', onDocumentClick)
+  window.removeEventListener('notif:mark-all-read', onExternalMarkAllRead)
+  window.removeEventListener('notif:mark-read', onExternalMarkRead)
+  window.removeEventListener('notif:refresh', onExternalRefresh)
 })
 </script>
 
@@ -193,9 +220,12 @@ onUnmounted(() => {
 
 @media (max-width: 480px) {
   .notif-dropdown {
-    width: calc(100vw - 24px);
-    /* Bù về phía trái để dropdown không lệch ra ngoài viewport bên trái */
-    right: -8px;
+    position: fixed;
+    top: 68px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
   }
 }
 

@@ -9,7 +9,7 @@
     ref="containerRef"
   >
     <!-- Top bar -->
-    <div class="flex items-center justify-between px-5 pt-10 pb-3 flex-shrink-0">
+    <div class="flex items-center justify-between px-3 sm:px-5 pt-6 sm:pt-10 pb-3 flex-shrink-0">
       <!-- Counter -->
       <span class="text-white/60 text-sm font-medium">
         {{ images.length ? `${activeIdx + 1} / ${images.length}` : '' }}
@@ -163,7 +163,7 @@
       </Transition>
 
       <!-- Thumbnail strip -->
-      <div class="flex-shrink-0 px-4 pb-8 pt-3">
+      <div class="flex-shrink-0 px-4 pb-6 sm:pb-8 pt-3">
         <div class="flex gap-2 overflow-x-auto scrollbar-hide justify-center">
           <button
             v-for="(img, idx) in images"

@@ -37,6 +37,49 @@
       </button>
 
       <button
+        :disabled="exporting"
+        @click="exportCsv"
+        class="flex items-center gap-2 bg-white hover:bg-[#F0F4F8] disabled:opacity-60 disabled:cursor-not-allowed border border-[#E8EFF5] text-[#414A4D] text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+        :title="`Xuất ${totalElements.toLocaleString('vi')} căn hộ theo bộ lọc hiện tại`"
+      >
+        <svg v-if="!exporting" width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M6.5 1v8m0 0L3 5.5m3.5 3.5L10 5.5M1.5 11h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg v-else class="animate-spin" width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.6" stroke-dasharray="14 12"/>
+        </svg>
+        {{ exporting ? 'Đang xuất...' : 'Xuất CSV' }}
+      </button>
+
+      <button
+        :disabled="selectedIds.size === 0"
+        @click="openBulkStatusDialog"
+        class="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border transition-colors"
+        :class="selectedIds.size > 0
+          ? 'bg-white border-[#A8845A] text-[#A8845A] hover:bg-[#FBF6EE]'
+          : 'bg-white border-[#E8EFF5] text-[#C5D5DF] cursor-not-allowed'"
+      >
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M2 6.5l3 3 6-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Đổi trạng thái{{ selectedIds.size > 0 ? ` (${selectedIds.size})` : '' }}
+      </button>
+
+      <button
+        :disabled="selectedIds.size === 0"
+        @click="openBulkMoveDialog"
+        class="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border transition-colors"
+        :class="selectedIds.size > 0
+          ? 'bg-white border-[#0F2E4A] text-[#0F2E4A] hover:bg-[#F0F4F8]'
+          : 'bg-white border-[#E8EFF5] text-[#C5D5DF] cursor-not-allowed'"
+      >
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M2 6.5h9m0 0L7.5 3m3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Chuyển toà{{ selectedIds.size > 0 ? ` (${selectedIds.size})` : '' }}
+      </button>
+
+      <button
         :disabled="selectedIds.size === 0"
         @click="handleBulkDelete"
         class="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border transition-colors"
@@ -355,6 +398,145 @@
       </div>
     </div>
 
+  <!-- Bulk status dialog -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="bulkStatusDialog.show" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 overflow-y-auto" @click.self="closeBulkStatusDialog">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 my-auto max-h-[90vh] overflow-y-auto">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h3 class="text-[#0F2E4A] font-bold text-lg">Đổi trạng thái hàng loạt</h3>
+              <p class="text-[#7A9AAD] text-sm mt-0.5">{{ bulkStatusDialog.ids.length }} căn hộ đã chọn</p>
+            </div>
+            <button @click="closeBulkStatusDialog" class="text-[#A9B8A8] hover:text-[#414A4D] transition-colors">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+
+          <label class="block text-[#7A9AAD] text-[10px] font-semibold tracking-widest uppercase mb-1.5">TRẠNG THÁI MỚI <span class="text-red-400">*</span></label>
+          <select
+            v-model="bulkStatusDialog.status"
+            class="w-full px-3 py-2.5 bg-white border border-[#E8EFF5] rounded-xl text-sm text-[#414A4D] outline-none focus:border-[#414A4D] cursor-pointer mb-4"
+          >
+            <option value="">Chọn trạng thái</option>
+            <option v-for="s in statusOptions" :key="s.value" :value="s.value">{{ s.label }}</option>
+          </select>
+
+          <label class="block text-[#7A9AAD] text-[10px] font-semibold tracking-widest uppercase mb-1.5">GHI CHÚ</label>
+          <textarea
+            v-model="bulkStatusDialog.note"
+            rows="2"
+            placeholder="Lý do đổi trạng thái..."
+            class="w-full px-3 py-2.5 bg-white border border-[#E8EFF5] rounded-xl text-sm text-[#414A4D] outline-none focus:border-[#414A4D] resize-none mb-3"
+          />
+
+          <div v-if="bulkStatusDialog.progress.total > 0" class="bg-[#F6F9FB] rounded-xl px-4 py-3 mb-4">
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <span class="text-[#7A9AAD]">Đang xử lý {{ bulkStatusDialog.progress.done }}/{{ bulkStatusDialog.progress.total }}</span>
+              <span v-if="bulkStatusDialog.progress.failed > 0" class="text-red-500">Lỗi: {{ bulkStatusDialog.progress.failed }}</span>
+            </div>
+            <div class="h-1.5 rounded-full bg-[#E8EFF5] overflow-hidden">
+              <div class="h-full bg-[#A8845A] transition-all" :style="{ width: bulkStatusProgressPercent + '%' }" />
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button
+              type="button"
+              :disabled="bulkStatusDialog.submitting"
+              @click="closeBulkStatusDialog"
+              class="flex-1 py-2.5 rounded-xl border border-[#E8EFF5] text-[#414A4D] font-medium text-sm hover:bg-[#F0F4F8] transition-colors disabled:opacity-60"
+            >Hủy</button>
+            <button
+              type="button"
+              :disabled="bulkStatusDialog.submitting || !bulkStatusDialog.status"
+              @click="executeBulkStatus"
+              class="flex-1 py-2.5 rounded-xl bg-[#A8845A] text-white font-semibold text-sm hover:bg-[#916e48] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <svg v-if="bulkStatusDialog.submitting" class="animate-spin" width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="white" stroke-width="1.8" stroke-dasharray="14 10"/></svg>
+              {{ bulkStatusDialog.submitting ? 'Đang cập nhật...' : 'Áp dụng' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
+  <!-- Bulk move dialog -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="bulkMoveDialog.show" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 overflow-y-auto" @click.self="closeBulkMoveDialog">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 my-auto max-h-[90vh] overflow-y-auto">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h3 class="text-[#0F2E4A] font-bold text-lg">Chuyển toà hàng loạt</h3>
+              <p class="text-[#7A9AAD] text-sm mt-0.5">{{ bulkMoveDialog.ids.length }} căn hộ đã chọn</p>
+            </div>
+            <button @click="closeBulkMoveDialog" class="text-[#A9B8A8] hover:text-[#414A4D] transition-colors">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+
+          <label class="block text-[#7A9AAD] text-[10px] font-semibold tracking-widest uppercase mb-1.5">PHÂN KHU MỚI</label>
+          <select
+            v-model="bulkMoveDialog.zoneId"
+            class="w-full px-3 py-2.5 bg-white border border-[#E8EFF5] rounded-xl text-sm text-[#414A4D] outline-none focus:border-[#414A4D] cursor-pointer mb-3"
+            @change="onBulkMoveZoneChange"
+          >
+            <option value="">Chọn phân khu</option>
+            <option v-for="z in zones" :key="z.id" :value="z.id">{{ z.name }}</option>
+          </select>
+
+          <label class="block text-[#7A9AAD] text-[10px] font-semibold tracking-widest uppercase mb-1.5">TOÀ NHÀ MỚI <span class="text-red-400">*</span></label>
+          <select
+            v-model="bulkMoveDialog.buildingId"
+            class="w-full px-3 py-2.5 bg-white border border-[#E8EFF5] rounded-xl text-sm text-[#414A4D] outline-none focus:border-[#414A4D] cursor-pointer mb-4"
+            :disabled="!bulkMoveDialog.zoneId || bulkMoveDialog.loadingBuildings"
+          >
+            <option value="">{{ bulkMoveDialog.zoneId ? (bulkMoveDialog.loadingBuildings ? 'Đang tải...' : 'Chọn toà nhà') : 'Chọn phân khu trước' }}</option>
+            <option v-for="b in bulkMoveDialog.buildings" :key="b.id" :value="b.id">{{ b.name }} ({{ b.code }})</option>
+          </select>
+
+          <label class="block text-[#7A9AAD] text-[10px] font-semibold tracking-widest uppercase mb-1.5">GHI CHÚ</label>
+          <textarea
+            v-model="bulkMoveDialog.note"
+            rows="2"
+            placeholder="Lý do chuyển toà..."
+            class="w-full px-3 py-2.5 bg-white border border-[#E8EFF5] rounded-xl text-sm text-[#414A4D] outline-none focus:border-[#414A4D] resize-none mb-3"
+          />
+
+          <div v-if="bulkMoveDialog.progress.total > 0" class="bg-[#F6F9FB] rounded-xl px-4 py-3 mb-4">
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <span class="text-[#7A9AAD]">Đang xử lý {{ bulkMoveDialog.progress.done }}/{{ bulkMoveDialog.progress.total }}</span>
+              <span v-if="bulkMoveDialog.progress.failed > 0" class="text-red-500">Lỗi: {{ bulkMoveDialog.progress.failed }}</span>
+            </div>
+            <div class="h-1.5 rounded-full bg-[#E8EFF5] overflow-hidden">
+              <div class="h-full bg-[#0F2E4A] transition-all" :style="{ width: bulkMoveProgressPercent + '%' }" />
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button
+              type="button"
+              :disabled="bulkMoveDialog.submitting"
+              @click="closeBulkMoveDialog"
+              class="flex-1 py-2.5 rounded-xl border border-[#E8EFF5] text-[#414A4D] font-medium text-sm hover:bg-[#F0F4F8] transition-colors disabled:opacity-60"
+            >Hủy</button>
+            <button
+              type="button"
+              :disabled="bulkMoveDialog.submitting || !bulkMoveDialog.buildingId"
+              @click="executeBulkMove"
+              class="flex-1 py-2.5 rounded-xl bg-[#0F2E4A] text-white font-semibold text-sm hover:bg-[#1a4060] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <svg v-if="bulkMoveDialog.submitting" class="animate-spin" width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="white" stroke-width="1.8" stroke-dasharray="14 10"/></svg>
+              {{ bulkMoveDialog.submitting ? 'Đang chuyển...' : 'Xác nhận chuyển' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
   <!-- Delete confirm dialog -->
   <Teleport to="body">
     <Transition name="fade">
@@ -402,7 +584,7 @@ import { useRouter } from 'vue-router'
 import apartmentService from '@/services/apartmentService'
 import zoneService from '@/services/zoneService'
 import type { ApartmentResponse, ApartmentStatus } from '@/types/apartment'
-import type { Zone } from '@/types/zone'
+import type { Zone, BuildingResponse } from '@/types/zone'
 
 const router = useRouter()
 
@@ -644,6 +826,95 @@ async function executeDelete() {
   }
 }
 
+// CSV Export
+const exporting = ref(false)
+const EXPORT_PAGE_SIZE = 200
+
+function csvCell(v: unknown): string {
+  if (v == null) return ''
+  const s = String(v)
+  return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
+
+function typeLabel(code: string) {
+  return typeOptions.value.find(t => t.value === code)?.label ?? code ?? ''
+}
+
+function formatDateVi(iso: string) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+async function exportCsv() {
+  if (exporting.value) return
+  exporting.value = true
+  try {
+    const baseFilter = {
+      search: searchInput.value.trim() || undefined,
+      zoneId: filter.zoneId || undefined,
+      status: filter.status || undefined,
+      type: filter.type || undefined,
+      minPrice: filter.minPrice ?? undefined,
+      maxPrice: filter.maxPrice ?? undefined,
+      minArea: filter.minArea ?? undefined,
+      maxArea: filter.maxArea ?? undefined,
+      size: EXPORT_PAGE_SIZE,
+    }
+
+    const all: ApartmentResponse[] = []
+    let page = 0
+    let totalPagesRemote = 1
+    do {
+      const res = await apartmentService.getList({ ...baseFilter, page })
+      const data = res.data.data
+      all.push(...data.content)
+      totalPagesRemote = data.totalPages
+      page++
+    } while (page < totalPagesRemote)
+
+    const headers = [
+      'STT', 'Mã căn', 'Mã hiển thị', 'Phân khu', 'Toà', 'Tầng',
+      'Loại căn', 'Số phòng ngủ', 'Hướng', 'Diện tích (m²)',
+      'Giá bán (VND)', 'Thuế (VND)', 'Trạng thái', 'Ngày tạo',
+    ]
+    const rows = all.map((a, i) => [
+      i + 1,
+      a.unitCode,
+      a.displayCode,
+      a.zoneName,
+      a.buildingName,
+      a.floorNumber,
+      typeLabel(a.apartmentType),
+      a.bedroomCount,
+      a.direction,
+      a.area,
+      a.sellingPrice,
+      a.tax,
+      statusLabel(a.status),
+      formatDateVi(a.createdAt),
+    ])
+
+    const csv = [headers, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    const stamp = new Date().toISOString().slice(0, 10)
+    a.href = url
+    a.download = `can-ho_${stamp}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error('[Export CSV] failed:', e)
+    window.alert('Không thể xuất file. Vui lòng thử lại.')
+  } finally {
+    exporting.value = false
+  }
+}
+
 async function handleBulkDelete() {
   if (selectedIds.size === 0) return
   // For now navigate — bulk delete can be extended
@@ -654,6 +925,142 @@ async function handleBulkDelete() {
     selectedIds.clear()
     fetchApartments()
   } catch { /* silent */ }
+}
+
+// Bulk status change
+const bulkStatusDialog = reactive({
+  show: false,
+  submitting: false,
+  status: '' as ApartmentStatus | '',
+  note: '',
+  ids: [] as string[],
+  progress: { total: 0, done: 0, failed: 0 },
+})
+const bulkStatusProgressPercent = computed(() => {
+  const t = bulkStatusDialog.progress.total
+  return t > 0 ? Math.round((bulkStatusDialog.progress.done / t) * 100) : 0
+})
+
+function openBulkStatusDialog() {
+  if (selectedIds.size === 0) return
+  bulkStatusDialog.ids = [...selectedIds]
+  bulkStatusDialog.status = ''
+  bulkStatusDialog.note = ''
+  bulkStatusDialog.progress = { total: 0, done: 0, failed: 0 }
+  bulkStatusDialog.show = true
+}
+function closeBulkStatusDialog() {
+  if (bulkStatusDialog.submitting) return
+  bulkStatusDialog.show = false
+}
+
+interface BulkProgress { total: number; done: number; failed: number }
+
+async function runBulk(
+  ids: string[],
+  progress: BulkProgress,
+  worker: (id: string) => Promise<unknown>,
+) {
+  progress.total = ids.length
+  progress.done = 0
+  progress.failed = 0
+  await Promise.all(ids.map(async (id) => {
+    try { await worker(id) } catch { progress.failed++ } finally { progress.done++ }
+  }))
+}
+
+async function executeBulkStatus() {
+  if (!bulkStatusDialog.status || bulkStatusDialog.ids.length === 0) return
+  bulkStatusDialog.submitting = true
+  const newStatus = bulkStatusDialog.status
+  const note = bulkStatusDialog.note.trim()
+
+  await runBulk(bulkStatusDialog.ids, bulkStatusDialog.progress, async (id) => {
+    const fres = await apartmentService.getById(id)
+    const apt = fres.data.data
+    await apartmentService.update(id, {
+      unitCode: apt.unitCode,
+      displayCode: apt.displayCode || undefined,
+      area: apt.area,
+      sellingPrice: apt.sellingPrice,
+      tax: apt.tax ?? undefined,
+      status: newStatus,
+      apartmentType: apt.apartmentType || undefined,
+      furnitureDescription: apt.furnitureDescription || undefined,
+      floorNumber: apt.floorNumber ?? undefined,
+      direction: apt.direction || undefined,
+      bedroomCount: apt.bedroomCount ?? undefined,
+      buildingId: apt.buildingId,
+      statusNote: note || undefined,
+    })
+  })
+
+  bulkStatusDialog.submitting = false
+  selectedIds.clear()
+  await fetchApartments()
+  if (bulkStatusDialog.progress.failed === 0) bulkStatusDialog.show = false
+}
+
+// Bulk move
+const bulkMoveDialog = reactive({
+  show: false,
+  submitting: false,
+  zoneId: '',
+  buildingId: '',
+  note: '',
+  ids: [] as string[],
+  buildings: [] as BuildingResponse[],
+  loadingBuildings: false,
+  progress: { total: 0, done: 0, failed: 0 },
+})
+const bulkMoveProgressPercent = computed(() => {
+  const t = bulkMoveDialog.progress.total
+  return t > 0 ? Math.round((bulkMoveDialog.progress.done / t) * 100) : 0
+})
+
+function openBulkMoveDialog() {
+  if (selectedIds.size === 0) return
+  bulkMoveDialog.ids = [...selectedIds]
+  bulkMoveDialog.zoneId = ''
+  bulkMoveDialog.buildingId = ''
+  bulkMoveDialog.note = ''
+  bulkMoveDialog.buildings = []
+  bulkMoveDialog.progress = { total: 0, done: 0, failed: 0 }
+  bulkMoveDialog.show = true
+}
+function closeBulkMoveDialog() {
+  if (bulkMoveDialog.submitting) return
+  bulkMoveDialog.show = false
+}
+async function onBulkMoveZoneChange() {
+  bulkMoveDialog.buildingId = ''
+  bulkMoveDialog.buildings = []
+  if (!bulkMoveDialog.zoneId) return
+  bulkMoveDialog.loadingBuildings = true
+  try {
+    const res = await zoneService.getBuildingsByZone(bulkMoveDialog.zoneId)
+    bulkMoveDialog.buildings = res.data.data ?? []
+  } catch {
+    bulkMoveDialog.buildings = []
+  } finally {
+    bulkMoveDialog.loadingBuildings = false
+  }
+}
+
+async function executeBulkMove() {
+  if (!bulkMoveDialog.buildingId || bulkMoveDialog.ids.length === 0) return
+  bulkMoveDialog.submitting = true
+  const newBuildingId = bulkMoveDialog.buildingId
+  const note = bulkMoveDialog.note.trim()
+
+  await runBulk(bulkMoveDialog.ids, bulkMoveDialog.progress, (id) =>
+    apartmentService.move(id, { newBuildingId, note: note || undefined }),
+  )
+
+  bulkMoveDialog.submitting = false
+  selectedIds.clear()
+  await fetchApartments()
+  if (bulkMoveDialog.progress.failed === 0) bulkMoveDialog.show = false
 }
 
 // Fetch

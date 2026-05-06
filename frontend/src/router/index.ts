@@ -94,6 +94,12 @@ const router = createRouter({
           component: () => import('@/views/system/AdminUsersView.vue'),
           meta: { requiresAuth: true, requiresAdmin: true },
         },
+        {
+          path: 'notifications',
+          name: 'Notifications',
+          component: () => import('@/views/notification/NotificationsView.vue'),
+          meta: { requiresAuth: true },
+        },
       ],
     },
 

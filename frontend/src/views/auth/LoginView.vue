@@ -14,7 +14,7 @@
     </div>
 
     <!-- Card form -->
-    <div class="bg-white rounded-2xl border border-el-border p-8 shadow-sm animate-fadeIn">
+    <div class="bg-white rounded-2xl border border-el-border p-6 sm:p-8 shadow-sm animate-fadeIn">
       <h2 class="font-manrope font-bold text-[22px] text-el-primary mb-1">Đăng nhập</h2>
       <p class="font-inter text-[13px] text-el-secondary mb-7">Nhập thông tin tài khoản để tiếp tục</p>
 

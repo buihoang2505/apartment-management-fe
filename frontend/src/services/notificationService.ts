@@ -1,7 +1,16 @@
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import http from './http'
-import type { CommonResponse } from '@/types/common'
+import type { CommonResponse, PageResponse } from '@/types/common'
+
+export type NotificationType = 'APARTMENT' | 'EMPLOYEE' | 'PORTFOLIO'
+
+export interface NotificationPageFilter {
+  type?: NotificationType | ''
+  unreadOnly?: boolean
+  page?: number
+  size?: number
+}
 
 export interface NotificationResponse {
   id: string
@@ -20,6 +29,16 @@ const WS_URL = import.meta.env.VITE_WS_BASE_URL ?? 'http://localhost:8080/api/ws
 const notificationService = {
   getAll(): Promise<{ data: CommonResponse<NotificationResponse[]> }> {
     return http.get('/notifications')
+  },
+
+  getPage(filter: NotificationPageFilter = {}): Promise<{ data: CommonResponse<PageResponse<NotificationResponse>> }> {
+    const params: Record<string, unknown> = {
+      page: filter.page ?? 0,
+      size: filter.size ?? 20,
+      unreadOnly: filter.unreadOnly ?? false,
+    }
+    if (filter.type) params.type = filter.type
+    return http.get('/notifications/page', { params })
   },
 
   markAsRead(id: string): Promise<{ data: CommonResponse<void> }> {

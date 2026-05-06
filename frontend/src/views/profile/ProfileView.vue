@@ -8,7 +8,7 @@
       <div v-else-if="profile" class="grid grid-cols-1 gap-6 lg:grid-cols-[320px,1fr]">
         <aside class="overflow-hidden rounded-2xl border border-[#E5E9EE] bg-white shadow-sm">
           <div class="h-24 bg-gradient-to-r from-[#0F2E4A] to-[#1B3F63]" />
-          <div class="-mt-12 px-6 pb-6">
+          <div class="-mt-12 px-4 sm:px-6 pb-5 sm:pb-6">
             <div class="group relative h-24 w-24 cursor-pointer overflow-hidden rounded-full border-4 border-white shadow-lg" @click="triggerFilePicker">
               <img v-if="avatarSrc" :src="avatarSrc" alt="Avatar" class="h-full w-full object-cover" />
               <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#A8845A] to-[#D6B47E] text-3xl font-bold text-white">
@@ -60,7 +60,7 @@
             </div>
           </div>
 
-          <div class="p-5 sm:p-6">
+          <div class="p-4 sm:p-6">
             <div v-if="activeTab === 'basic'" class="space-y-4">
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div class="md:col-span-2">

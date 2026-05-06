@@ -64,6 +64,10 @@ const apartmentService = {
     return http.delete(`/apartments/${id}/images/${imageId}`)
   },
 
+  reorderImages(id: string, imageIds: string[]): Promise<{ data: CommonResponse<void> }> {
+    return http.patch(`/apartments/${id}/images/order`, { imageIds })
+  },
+
   getStatusHistory(id: string): Promise<{ data: CommonResponse<ApartmentStatusHistoryResponse[]> }> {
     return http.get(`/apartments/${id}/status-history`)
   },

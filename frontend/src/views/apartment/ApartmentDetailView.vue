@@ -314,36 +314,83 @@
               <div
                 v-for="(img, idx) in form.images"
                 :key="img.id ?? idx"
-                class="relative aspect-square rounded-xl overflow-hidden bg-[#F0F4F8] group cursor-pointer"
-                @click="openGallery(idx)"
+                class="relative aspect-square rounded-xl overflow-hidden bg-[#F0F4F8] group transition-all"
+                :class="[
+                  draggingIdx === idx ? 'opacity-40 scale-95' : '',
+                  dragOverIdx === idx && draggingIdx !== idx ? 'ring-2 ring-[#A8845A]' : '',
+                ]"
+                @dragover.prevent="onDragOver(idx, $event)"
+                @dragleave="onDragLeave(idx)"
+                @drop.prevent="onDrop(idx)"
               >
                 <img
                   :src="imageDisplayUrl(img.url)"
                   :alt="img.label || `Ảnh ${idx + 1}`"
-                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 cursor-pointer"
+                  :draggable="!isNew && !uploadingImages"
+                  @dragstart="onDragStart(idx, $event)"
+                  @dragend="onDragEnd"
+                  @click="openGallery(idx)"
                   @error="(e) => (e.target as HTMLImageElement).parentElement!.style.display='none'"
                 />
+
+                <!-- Cover badge -->
+                <span
+                  v-if="idx === 0"
+                  class="absolute top-1 left-1 bg-[#A8845A] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5"
+                >
+                  <svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor">
+                    <path d="M5 0l1.5 3 3.5.5-2.5 2.5.5 3.5L5 8l-3 1.5.5-3.5L0 3.5 3.5 3z"/>
+                  </svg>
+                  Bìa
+                </span>
+
                 <!-- Delete spinner -->
                 <div
-                  v-if="deletingImageId === img.id"
+                  v-if="deletingImageId === img.id || reorderingImages"
                   class="absolute inset-0 bg-black/50 flex items-center justify-center"
                 >
                   <svg class="animate-spin" width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <circle cx="8" cy="8" r="6" stroke="white" stroke-width="2" stroke-dasharray="18 14"/>
                   </svg>
                 </div>
-                <button
-                  v-else
-                  type="button"
-                  @click.stop="removeImage(idx)"
-                  class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+
+                <!-- Action buttons (top-right) -->
+                <div
+                  v-if="deletingImageId !== img.id && !reorderingImages"
+                  draggable="false"
+                  class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  @mousedown.stop
+                  @dragstart.stop.prevent
                 >
-                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                    <path d="M1 1l6 6M7 1L1 7" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
-                  </svg>
-                </button>
+                  <button
+                    v-if="idx !== 0"
+                    type="button"
+                    title="Đặt làm ảnh bìa"
+                    @click.stop="setAsCover(idx)"
+                    class="w-5 h-5 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-[#A8845A]"
+                  >
+                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                      <path d="M5 1l1.3 2.6 2.7.4-2 2 .5 2.7L5 7.5 2.5 8.7 3 6 1 4l2.7-.4z" stroke="white" stroke-width="0.8" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    title="Xoá ảnh"
+                    @click.stop="removeImage(idx)"
+                    class="w-5 h-5 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-red-500"
+                  >
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                      <path d="M1 1l6 6M7 1L1 7" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
+
+            <p v-if="form.images.length > 1 && !isNew" class="text-[10px] text-[#A9B8A8] mb-3 -mt-1">
+              Kéo-thả để sắp xếp lại · Ảnh đầu tiên là ảnh bìa
+            </p>
 
             <!-- Empty gallery -->
             <div v-else class="flex flex-col items-center justify-center py-6 mb-3 border-2 border-dashed border-[#E8EFF5] rounded-xl">
@@ -1130,6 +1177,67 @@ async function removeImage(idx: number) {
   }
 }
 
+// Drag-and-drop reorder + cover
+const draggingIdx = ref<number | null>(null)
+const dragOverIdx = ref<number | null>(null)
+const reorderingImages = ref(false)
+
+function onDragStart(idx: number, e: DragEvent) {
+  draggingIdx.value = idx
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(idx))
+  }
+}
+function onDragOver(idx: number, e: DragEvent) {
+  if (draggingIdx.value === null || draggingIdx.value === idx) return
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+  dragOverIdx.value = idx
+}
+function onDragLeave(idx: number) {
+  if (dragOverIdx.value === idx) dragOverIdx.value = null
+}
+function onDragEnd() {
+  draggingIdx.value = null
+  dragOverIdx.value = null
+}
+async function onDrop(targetIdx: number) {
+  const from = draggingIdx.value
+  draggingIdx.value = null
+  dragOverIdx.value = null
+  if (from === null || from === targetIdx) return
+  const next = [...form.images]
+  const [moved] = next.splice(from, 1)
+  next.splice(targetIdx, 0, moved)
+  form.images = next
+  await persistImageOrder()
+}
+
+async function setAsCover(idx: number) {
+  if (idx === 0 || idx >= form.images.length) return
+  const next = [...form.images]
+  const [moved] = next.splice(idx, 1)
+  next.unshift(moved)
+  form.images = next
+  await persistImageOrder()
+}
+
+async function persistImageOrder() {
+  // Cập nhật sortOrder cục bộ
+  form.images.forEach((img, i) => { img.sortOrder = i })
+  if (isNew.value || !apartmentId.value) return
+  const ids = form.images.map(img => img.id).filter((v): v is string => !!v)
+  if (ids.length === 0) return
+  reorderingImages.value = true
+  try {
+    await apartmentService.reorderImages(apartmentId.value, ids)
+  } catch {
+    showToast('error', 'Không thể lưu thứ tự ảnh trên máy chủ')
+  } finally {
+    reorderingImages.value = false
+  }
+}
+
 async function handleFileUpload(event: Event) {
   if (isNew.value || !apartmentId.value) {
     showToast('error', 'Vui lòng lưu căn hộ trước, sau đó mới có thể upload ảnh')
@@ -1143,11 +1251,16 @@ async function handleFileUpload(event: Event) {
   uploadingImages.value = true
   try {
     const res = await apartmentService.uploadImages(apartmentId.value, files)
-    const newImgs = (res.data as any)?.data ?? []
-    newImgs.forEach((img: { id: string; url: string; label?: string; sortOrder?: number }) => {
-      form.images.push({ id: img.id, url: img.url, label: img.label ?? '', sortOrder: img.sortOrder ?? form.images.length })
-    })
-    showToast('success', `Đã tải lên ${newImgs.length} ảnh`)
+    const returnedImgs: Array<{ id: string; url: string; label?: string; sortOrder?: number }> =
+      (res.data as any)?.data ?? []
+    // BE addImages trả về toàn bộ list canonical → đồng bộ lại để tránh trùng
+    form.images = returnedImgs.map((img, i) => ({
+      id: img.id,
+      url: img.url,
+      label: img.label ?? '',
+      sortOrder: img.sortOrder ?? i,
+    }))
+    showToast('success', `Đã tải lên ${files.length} ảnh`)
   } catch {
     showToast('error', 'Tải ảnh lên thất bại')
   } finally {
