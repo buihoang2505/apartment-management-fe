@@ -3,7 +3,7 @@ import SockJS from 'sockjs-client'
 import http from './http'
 import type { CommonResponse, PageResponse } from '@/types/common'
 
-export type NotificationType = 'APARTMENT' | 'EMPLOYEE' | 'PORTFOLIO'
+export type NotificationType = 'APARTMENT' | 'EMPLOYEE' | 'PORTFOLIO' | 'CUSTOMER' | 'CONTRACT' | 'BOOKING'
 
 export interface NotificationPageFilter {
   type?: NotificationType | ''

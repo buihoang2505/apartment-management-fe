@@ -119,6 +119,9 @@ const typeChips: Array<{ value: TypeFilter; label: string }> = [
   { value: 'APARTMENT', label: 'Căn hộ' },
   { value: 'EMPLOYEE', label: 'Nhân viên' },
   { value: 'PORTFOLIO', label: 'Phân khu' },
+  { value: 'CUSTOMER', label: 'Khách hàng' },
+  { value: 'CONTRACT', label: 'Hợp đồng' },
+  { value: 'BOOKING', label: 'Lịch hẹn' },
 ]
 
 const filter = reactive({
@@ -207,6 +210,9 @@ async function onClickItem(n: NotificationResponse) {
     if (n.type === 'APARTMENT')      router.push(`/apartments/${n.targetId}`)
     else if (n.type === 'EMPLOYEE')  router.push(`/employees/${n.targetId}`)
     else if (n.type === 'PORTFOLIO') router.push(`/portfolios/${n.targetId}`)
+    else if (n.type === 'CUSTOMER')  router.push(`/customers`)
+    else if (n.type === 'CONTRACT')  router.push(`/contracts/${n.targetId}`)
+    else if (n.type === 'BOOKING')   router.push(`/calendar`)
   }
 }
 
@@ -244,15 +250,33 @@ const PortfolioIcon = defineComponent({ render: () => h('svg', { width: 18, heig
   h('path', { d: 'M2 10h16', stroke: 'currentColor', 'stroke-width': '1.5' }),
 ])})
 
+const CustomerIcon = defineComponent({ render: () => h('svg', { width: 18, height: 18, viewBox: '0 0 20 20', fill: 'none' }, [
+  h('circle', { cx: 10, cy: 7, r: 3.5, stroke: 'currentColor', 'stroke-width': '1.5' }),
+  h('path', { d: 'M3 18a7 7 0 0 1 14 0', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round' }),
+])})
+const ContractIcon = defineComponent({ render: () => h('svg', { width: 18, height: 18, viewBox: '0 0 20 20', fill: 'none' }, [
+  h('rect', { x: 3, y: 2, width: 14, height: 16, rx: 1.5, stroke: 'currentColor', 'stroke-width': '1.5' }),
+  h('path', { d: 'M7 7h6M7 11h6M7 15h4', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round' }),
+])})
+const BookingIcon = defineComponent({ render: () => h('svg', { width: 18, height: 18, viewBox: '0 0 20 20', fill: 'none' }, [
+  h('rect', { x: 3, y: 4, width: 14, height: 14, rx: 1.5, stroke: 'currentColor', 'stroke-width': '1.5' }),
+  h('path', { d: 'M3 8h14M7 2v4M13 2v4', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round' }),
+])})
+
+const FALLBACK_META = { label: 'Thông báo', classes: 'bg-[#414A4D]/10 text-[#414A4D]/70', icon: ApartmentIcon }
 const TYPE_META: Record<NotificationType, { label: string; classes: string; icon: ReturnType<typeof defineComponent> }> = {
-  APARTMENT: { label: 'Căn hộ',    classes: 'bg-[#DBEAFE] text-[#2563EB]', icon: ApartmentIcon },
-  EMPLOYEE:  { label: 'Nhân viên', classes: 'bg-[#DCFCE7] text-[#16A34A]', icon: EmployeeIcon  },
-  PORTFOLIO: { label: 'Phân khu',  classes: 'bg-[#FEF9C3] text-[#CA8A04]', icon: PortfolioIcon },
+  APARTMENT: { label: 'Căn hộ',     classes: 'bg-[#DBEAFE] text-[#2563EB]', icon: ApartmentIcon },
+  EMPLOYEE:  { label: 'Nhân viên',  classes: 'bg-[#DCFCE7] text-[#16A34A]', icon: EmployeeIcon  },
+  PORTFOLIO: { label: 'Phân khu',   classes: 'bg-[#FEF9C3] text-[#CA8A04]', icon: PortfolioIcon },
+  CUSTOMER:  { label: 'Khách hàng', classes: 'bg-[#FFF1E0] text-[#A8845A]', icon: CustomerIcon  },
+  CONTRACT:  { label: 'Hợp đồng',   classes: 'bg-[#EDE9FE] text-[#7C3AED]', icon: ContractIcon  },
+  BOOKING:   { label: 'Lịch hẹn',   classes: 'bg-[#FCE7F3] text-[#DB2777]', icon: BookingIcon   },
 }
-function typeLabel(t: NotificationType)      { return TYPE_META[t].label }
-function typeBadgeClass(t: NotificationType) { return TYPE_META[t].classes }
-function iconWrapClass(t: NotificationType)  { return TYPE_META[t].classes }
-function iconFor(t: NotificationType)        { return TYPE_META[t].icon }
+function metaOf(t: NotificationType) { return TYPE_META[t] ?? FALLBACK_META }
+function typeLabel(t: NotificationType)      { return metaOf(t).label }
+function typeBadgeClass(t: NotificationType) { return metaOf(t).classes }
+function iconWrapClass(t: NotificationType)  { return metaOf(t).classes }
+function iconFor(t: NotificationType)        { return metaOf(t).icon }
 
 function formatTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
