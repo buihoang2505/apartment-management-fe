@@ -15,6 +15,13 @@ const router = createRouter({
         { path: '', name: 'Login', component: () => import('@/views/auth/LoginView.vue') },
       ],
     },
+    {
+      path: '/lead-register',
+      component: AuthLayout,
+      children: [
+        { path: '', name: 'LeadRegister', component: () => import('@/views/public/LeadRegisterView.vue') },
+      ],
+    },
 
     // Private
     {
@@ -42,6 +49,29 @@ const router = createRouter({
           path: 'apartments/:id',
           name: 'ApartmentDetail',
           component: () => import('@/views/apartment/ApartmentDetailView.vue'),
+        },
+        // Bookings / Calendar
+        {
+          path: 'calendar',
+          name: 'Calendar',
+          component: () => import('@/views/booking/CalendarView.vue'),
+        },
+        // Contracts
+        {
+          path: 'contracts',
+          name: 'ContractList',
+          component: () => import('@/views/contract/ContractListView.vue'),
+        },
+        {
+          path: 'contracts/:id',
+          name: 'ContractDetail',
+          component: () => import('@/views/contract/ContractDetailView.vue'),
+        },
+        // Customers
+        {
+          path: 'customers',
+          name: 'CustomerList',
+          component: () => import('@/views/customer/CustomerListView.vue'),
         },
         // Zones
         {

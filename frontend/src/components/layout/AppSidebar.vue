@@ -167,6 +167,31 @@ const manageNav = [
     `),
   },
   {
+    to: '/calendar',
+    label: 'Lịch hẹn',
+    icon: makeIcon(`
+      <rect x="3" y="4" width="14" height="14" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M3 8h14M7 2v4M13 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    `),
+  },
+  {
+    to: '/contracts',
+    label: 'Hợp đồng',
+    icon: makeIcon(`
+      <rect x="3" y="2" width="14" height="16" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M7 7h6M7 11h6M7 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    `),
+  },
+  {
+    to: '/customers',
+    label: 'Khách hàng',
+    icon: makeIcon(`
+      <circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M3 18a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M14 4.5a2.5 2.5 0 0 1 0 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    `),
+  },
+  {
     to: '/portfolios',
     label: 'Portfolio',
     icon: makeIcon(`
